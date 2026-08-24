@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="갓생">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F2F2F7">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<title>갓생</title>
+<style>
+  :root {
+    --brand: #6B4CF5;
+    --brand2: #A670FF;
+    --grad: linear-gradient(135deg, #6B4CF5, #A670FF);
+    --c0: #5CBF92; --c1: #578CF2; --c2: #9973EB;
+    --c3: #F59447; --c4: #ED7096; --c5: #47B8D1;
+    --bg: #F2F2F7;
+    --card: #FFFFFF;
+    --fill: rgba(120, 120, 128, 0.16);
+    --fill2: rgba(120, 120, 128, 0.12);
+    --label: #000000;
+    --label2: rgba(60, 60, 67, 0.6);
+    --label3: rgba(60, 60, 67, 0.3);
+    --sep: rgba(60, 60, 67, 0.12);
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --card: #1C1C1E;
+      --fill: rgba(120, 120, 128, 0.36);
+      --fill2: rgba(120, 120, 128, 0.24);
+      --label: #FFFFFF;
+      --label2: rgba(235, 235, 245, 0.6);
+      --label3: rgba(235, 235, 245, 0.3);
+      --sep: rgba(84, 84, 88, 0.5);
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { touch-action: manipulation; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro KR", "SF Pro Text", "Noto Sans KR", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--label);
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+    min-height: 100dvh;
+  }
+  button { font-family: inherit; border: none; background: none; color: inherit; cursor: pointer; touch-action: manipulation; }
+  input { font-family: inherit; }
+
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: calc(10px + var(--sat)) 20px calc(28px + var(--sab));
+  }
+
+  /* ---------- Header ---------- */
+  .header { display: flex; align-items: center; justify-content: space-between; padding-top: 6px; }
+  .header h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
+  .header .sub { font-size: 13px; color: var(--label2); margin-top: 2px; }
+  .ring-wrap { position: relative; width: 54px; height: 54px; flex-shrink: 0; }
+  .ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring-track { fill: none; stroke: var(--fill); stroke-width: 6; }
+  .ring-bar { fill: none; stroke: url(#ringGrad); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.45s cubic-bezier(0.25, 0.8, 0.35, 1); }
+  .ring-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Week nav ---------- */
+  .weeknav { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+  .navbtn {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--card);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: var(--label);
+    box-shadow: var(--shadow); transition: transform 0.12s, opacity 0.2s;
+  }
+  .navbtn:active { transform: scale(0.88); }
+  .navbtn[disabled] { opacity: 0.35; pointer-events: none; }
+  .weekrange { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ---------- Weekday header ---------- */
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 0 36px; margin-top: 16px; }
+  .days .d { text-align: center; font-size: 11px; font-weight: 700; color: var(--label2); }
+  .days .d.today { color: var(--label); }
+  .days .d .dot { display: block; width: 4px; height: 4px; border-radius: 50%; margin: 3px auto 0; background: transparent; }
+  .days .d.today .dot { background: var(--brand); }
+
+  /* ---------- Cards ---------- */
+  #cards { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+  .card {
+    background: var(--card); border-radius: 22px; padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card .head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .chip {
+    width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .card .name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .badge {
+    margin-left: auto; flex-shrink: 0; font-size: 12px; font-weight: 700;
+    font-variant-numeric: tabular-nums; padding: 0 9px; height: 24px; line-height: 24px;
+    border-radius: 999px; background: var(--fill2); color: var(--label2);
+  }
+  .badge.full { color: #fff; }
+  .row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .cell {
+    aspect-ratio: 1; border-radius: 50%; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.8px solid var(--fill);
+    transition: transform 0.15s cubic-bezier(0.3, 1.4, 0.6, 1), background 0.15s, border-color 0.15s, opacity 0.2s;
+    font-size: 13px; font-weight: 800; color: transparent;
+  }
+  .cell:active { transform: scale(0.85); }
+  .cell.on { border-color: transparent; color: #fff; }
+  .cell.future { opacity: 0.45; }
+  .cell.today-ring::after {
+    content: ""; position: absolute; inset: 2.5px; border-radius: 50%;
+    border: 1.5px solid var(--cell-color, var(--brand)); opacity: 0.55;
+  }
+  .cell.on.today-ring::after { display: none; }
+  .cell .check { opacity: 0; transform: scale(0.4); transition: opacity 0.15s, transform 0.2s cubic-bezier(0.3, 1.5, 0.6, 1); }
+  .cell.on .check { opacity: 1; transform: scale(1); }
+
+  /* ---------- Empty state ---------- */
+  .empty {
+    background: var(--card); border-radius: 22px; padding: 24px 20px; text-align: center;
+    border: 1.5px dashed var(--fill); box-shadow: var(--shadow);
+  }
+  .empty .plus { font-size: 34px; color: var(--brand); opacity: 0.75; font-weight: 300; }
+  .empty h2 { font-size: 15px; font-weight: 700; margin-top: 8px; }
+  .empty p { font-size: 12px; color: var(--label2); margin-top: 4px; }
+  .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .sugg {
+    font-size: 12px; font-weight: 500; padding: 0 12px; min-height: 36px;
+    background: var(--fill2); border-radius: 999px; color: var(--label);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: transform 0.12s;
+  }
+  .sugg:active { transform: scale(0.95); }
+
+  /* ---------- Add button ---------- */
+  #addbtn {
+    width: 100%; margin-top: 16px; height: 52px; border-radius: 18px;
+    background: rgba(107, 76, 245, 0.1); color: var(--brand);
+    font-size: 15px; font-weight: 600; transition: transform 0.12s, background 0.2s;
+  }
+  @media (prefers-color-scheme: dark) { #addbtn { background: rgba(139, 108, 255, 0.18); color: #B9A3FF; } }
+  #addbtn:active { transform: scale(0.97); }
+
+  /* ---------- Sheet ---------- */
+  #backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 40;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  #backdrop.show { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    background: var(--card); border-radius: 24px 24px 0 0;
+    padding: 14px 20px calc(16px + var(--sab));
+    transform: translateY(105%); transition: transform 0.3s cubic-bezier(0.3, 1, 0.4, 1);
+    max-height: 92dvh; overflow-y: auto; max-width: 480px; margin: 0 auto;
+  }
+  .sheet.show { transform: translateY(0); }
+  .sheet .grab { width: 36px; height: 5px; border-radius: 3px; background: var(--fill); margin: 0 auto 12px; }
+  .sheet h3 { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 18px; }
+  .sheet .lbl { font-size: 12px; font-weight: 600; color: var(--label2); margin: 16px 0 8px; }
+  .sheet input[type=text] {
+    width: 100%; height: 48px; border: none; outline: none;
+    background: var(--fill2); border-radius: 14px; padding: 0 14px;
+    font-size: 16px; color: var(--label);
+  }
+  .preview {
+    display: flex; align-items: center; gap: 12px; background: var(--bg);
+    border-radius: 18px; padding: 14px;
+  }
+  .preview .chip { width: 40px; height: 40px; border-radius: 12px; font-size: 19px; }
+  .preview .pname { font-size: 15px; font-weight: 600; }
+  .preview .pdots { display: flex; gap: 6px; margin-top: 6px; }
+  .preview .pdots span { width: 18px; height: 18px; border-radius: 50%; border: 1.2px solid var(--fill); }
+  .preview .pdots span.f { border-color: transparent; }
+  .emogrid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+  .emo {
+    aspect-ratio: 1; border-radius: 50%; font-size: 19px;
+    background: var(--fill2); display: flex; align-items: center; justify-content: center;
+    transition: transform 0.12s;
+  }
+  .emo:active { transform: scale(0.85); }
+  .sheet .actions { display: flex; gap: 10px; margin-top: 22px; }
+  .btn {
+    flex: 1; height: 50px; border-radius: 16px; font-size: 16px; font-weight: 600;
+    transition: transform 0.12s, opacity 0.2s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary { background: var(--grad); color: #fff; }
+  .btn.primary[disabled] { opacity: 0.35; pointer-events: none; }
+  .btn.ghost { background: var(--fill2); color: var(--label); }
+  .btn.danger { background: rgba(255, 59, 48, 0.12); color: #FF3B30; width: 100%; margin-top: 12px; }
+  @media (prefers-color-scheme: dark) { .btn.danger { color: #FF6961; } }
+
+  /* ---------- Settings ---------- */
+  .setrow {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 15px 2px; border-bottom: 1px solid var(--sep); font-size: 15px; font-weight: 500;
+  }
+  .setrow:last-of-type { border-bottom: none; }
+  .setrow .val { color: var(--label2); font-size: 13px; }
+  .setbtn { color: var(--brand); font-weight: 600; }
+
+  /* ---------- Toast ---------- */
+  #toast {
+    position: fixed; left: 50%; bottom: calc(28px + var(--sab)); z-index: 60;
+    transform: translate(-50%, 80px); opacity: 0;
+    background: rgba(20, 20, 22, 0.88); color: #fff;
+    padding: 0 18px; height: 46px; line-height: 46px; border-radius: 999px;
+    font-size: 14px; font-weight: 600; white-space: nowrap;
+    transition: transform 0.35s cubic-bezier(0.3, 1.2, 0.4, 1), opacity 0.3s;
+    pointer-events: none; max-width: calc(100vw - 40px); overflow: hidden; text-overflow: ellipsis;
+  }
+  #toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+  /* ---------- Onboarding ---------- */
+  #onboarding {
+    position: fixed; inset: 0; z-index: 100; background: var(--bg);
+    display: flex; flex-direction: column;
+    padding: calc(10px + var(--sat)) 0 calc(12px + var(--sab));
+  }
+  #onboarding.hide { display: none; }
+  .ob-skip { text-align: right; padding: 8px 24px; font-size: 14px; font-weight: 500; color: var(--label2); }
+  .ob-pages {
+    flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .ob-pages::-webkit-scrollbar { display: none; }
+  .ob-page {
+    min-width: 100%; scroll-snap-align: center; scroll-snap-stop: always;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 0 32px; text-align: center; gap: 28px;
+  }
+  .ob-icon {
+    width: 132px; height: 132px; border-radius: 36px; font-size: 56px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 24px rgba(107, 76, 245, 0.3);
+  }
+  .ob-title { font-size: 26px; font-weight: 700; line-height: 1.35; letter-spacing: -0.3px; white-space: pre-line; }
+  .ob-sub { font-size: 14px; color: var(--label2); line-height: 1.5; white-space: pre-line; }
+  .ob-mini {
+    display: flex; gap: 10px; padding: 14px 20px; background: var(--card);
+    border-radius: 20px; box-shadow: var(--shadow); height: 62px; align-items: center;
+  }
+  .ob-mini span { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--fill); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: transparent; }
+  .ob-mini span.on { border-color: transparent; color: #fff; }
+  .ob-dots { display: flex; gap: 8px; justify-content: center; padding: 20px 0; }
+  .ob-dots i { width: 8px; height: 8px; border-radius: 4px; background: var(--fill); transition: all 0.3s; }
+  .ob-dots i.on { width: 22px; background: var(--label); }
+  #ob-next {
+    margin: 0 24px; height: 56px; border-radius: 999px; background: var(--grad);
+    color: #fff; font-size: 17px; font-weight: 700; transition: transform 0.12s;
+  }
+  #ob-next:active { transform: scale(0.97); }
+
+  .fade-in { animation: fadeIn 0.3s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6B4CF5"/><stop offset="100%" stop-color="#A670FF"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div id="onboarding" class="hide">
+  <div class="ob-skip"><button id="ob-skip">건너뛰기</button></div>
+  <div class="ob-pages" id="ob-pages">
+    <div class="ob-page">
+      <div class="ob-icon" style="background:linear-gradient(135deg,#9973EB,#B58CFF)">✨</div>
+      <div><div class="ob-title">갓생,
+기록이 답이에요</div>
+      <p class="ob-sub" style="margin-top:12px">거창한 계획 대신
+하루하루 체크하는 작은 습관부터</p></div>
+      <div style="height:62px"></div>
+    </div>
+    <div class="ob-page">
+      <div class="ob-icon" style="background:linear-gradient(135deg,#578CF2,#7DA6FF);box-shadow:0 12px 24px rgba(87,140,242,0.3)">👆</div>
+      <div><div class="ob-title">탭 한 번으로
+완료 표시</div>
+      <p class="ob-sub" style="margin-top:12px">요일 칸을 탭으면 동그라미가 채워져요
+실수로 눌렀다면 한 번 더 탭으면 돼요</p></div>
+      <div class="ob-mini" id="ob-mini"></div>
+    </div>
+    <div class="ob-page">
+      <div class="ob-icon" style="background:linear-gradient(135deg,#5CBF92,#7ED9AE);box-shadow:0 12px 24px rgba(92,191,146,0.3)">🔄</div>
+      <div><div class="ob-title">매주 월요일
+새 하얀 칸</div>
+      <p class="ob-sub" style="margin-top:12px">지난 기록은 그대로 남고
+이번 주는 하얀 칸부터 다시 시작해요</p></div>
+      <div style="height:62px"></div>
+    </div>
+  </div>
+  <div class="ob-dots" id="ob-dots"><i class="on"></i><i></i><i></i></div>
+  <button id="ob-next">다음</button>
+</div>
+
+<div id="app">
+  <div class="header">
+    <div>
+      <h1>갓생</h1>
+      <div class="sub" id="sub">이번 주를 채워볼까요?</div>
+    </div>
+    <div class="ring-wrap" aria-label="이번 주 달성률">
+      <svg viewBox="0 0 54 54">
+        <circle class="ring-track" cx="27" cy="27" r="24"/>
+        <circle class="ring-bar" id="ring" cx="27" cy="27" r="24" stroke-dasharray="150.8" stroke-dashoffset="150.8"/>
+      </svg>
+      <div class="ring-num" id="ringnum">0</div>
+    </div>
+  </div>
+
+  <div class="weeknav">
+    <button class="navbtn" id="prevweek" aria-label="지난주">‹</button>
+    <div class="weekrange" id="weekrange"></div>
+    <button class="navbtn" id="nextweek" aria-label="다음 주">›</button>
+  </div>
+
+  <div class="days" id="days"></div>
+  <div id="cards"></div>
+
+  <button id="addbtn">＋ 새 갓생 습관 만들기</button>
+</div>
+
+<div id="backdrop"></div>
+
+<div class="sheet" id="habit-sheet">
+  <div class="grab"></div>
+  <h3 id="hs-title">새 갓생 습관</h3>
+  <div class="preview">
+    <div class="chip" id="pv-chip">⭐</div>
+    <div style="flex:1;min-width:0">
+      <div class="pname" id="pv-name">습관 이름 미리보기</div>
+      <div class="pdots" id="pv-dots"></div>
+    </div>
+  </div>
+  <div class="lbl">이름</div>
+  <input type="text" id="hs-name" placeholder="예: 저녁 9시 이후 금식" maxlength="30">
+  <div class="lbl">아이콘</div>
+  <div class="emogrid" id="hs-emos"></div>
+  <div id="hs-sugg-wrap">
+    <div class="lbl">추천 갓생 습관</div>
+    <div class="chips" id="hs-sugg"></div>
+  </div>
+  <div class="actions">
+    <button class="btn ghost" id="hs-cancel">취소</button>
+    <button class="btn primary" id="hs-save">추가</button>
+  </div>
+  <button class="btn danger" id="hs-delete" style="display:none">습관 삭제</button>
+</div>
+
+<div class="sheet" id="settings-sheet">
+  <div class="grab"></div>
+  <h3>설정</h3>
+  <div class="setrow"><span>기록 내보내기</span><button class="setbtn" id="exp">백업 파일 받기</button></div>
+  <div class="setrow"><span>기록 가져오기</span><button class="setbtn" id="imp">파일 선택</button></div>
+  <div class="setrow"><span>습관</span><span class="val" id="stat-habits">0개</span></div>
+  <div class="setrow"><span>전체 체크 수</span><span class="val" id="stat-checks">0회</span></div>
+  <div class="setrow"><span>데이터 초기화</span><button class="setbtn" id="reset" style="color:#FF3B30">전체 삭제</button></div>
+  <input type="file" id="imp-file" accept="application/json,.json" style="display:none">
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* ================= State ================= */
+const STORE_KEY = "godlife.v1";
+const EMOJIS = ["⭐","🔥","🍴","💧","📚","🏃","💪","💤","✍️","🧠","🛏️","🧘","🌊","✅","🌅","💳"];
+const SUGGESTIONS = [
+  ["저녁 9시 이후 금식","🍴"], ["아침 운동 10분","🏃"], ["물 2L 마시기","💧"],
+  ["독서 10쪽","📚"], ["자기 전 스마트폰 금지","💤"], ["일찍 일어나기","🌅"]
+];
+const PALETTE = ["#5CBF92","#578CF2","#9973EB","#F59447","#ED7096","#47B8D1"];
+const DAY_SYMS = ["월","화","수","목","금","토","일"];
+
+let state = load();
+let weekAnchor = startOfDay(new Date());
+let wasAllDoneToday = false;
+let editingId = null;
+let sheetEmoji = "⭐";
+let toastTimer = null;
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      return {
+        habits: Array.isArray(s.habits) ? s.habits : [],
+        checks: new Set(Array.isArray(s.checks) ? s.checks : []),
+        onboarded: !!s.onboarded
+      };
+    }
+  } catch (e) { console.warn("load failed", e); }
+  return { habits: [], checks: new Set(), onboarded: false };
+}
+function save() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      habits: state.habits, checks: [...state.checks], onboarded: state.onboarded
+    }));
+  } catch (e) { console.warn("save failed", e); }
+}
+
+/* ================= Date logic ================= */
+function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function key(d) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,"0"), dd = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${dd}`;
+}
+function mondayOf(d) {
+  const x = startOfDay(d);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return x;
+}
+function weekDays(anchor) {
+  const m = mondayOf(anchor);
+  return Array.from({length: 7}, (_, i) => { const d = new Date(m); d.setDate(m.getDate()+i); return d; });
+}
+function isFuture(d) { return startOfDay(d) > startOfDay(new Date()); }
+function fmtRange(days) {
+  const f = (d) => `${d.getMonth()+1}월 ${d.getDate()}일`;
+  return `${f(days[0])} – ${f(days[6])}`;
+}
+
+/* ================= Store ops ================= */
+function toggle(habitId, date) {
+  const k = habitId + "|" + key(date);
+  state.checks.has(k) ? state.checks.delete(k) : state.checks.add(k);
+  save();
+}
+function isChecked(habitId, date) { return state.checks.has(habitId + "|" + key(date)); }
+function allDoneToday() {
+  const t = key(new Date());
+  return state.habits.length > 0 && state.habits.every((h) => state.checks.has(h.id + "|" + t));
+}
+function addHabit(name, emoji) {
+  state.habits.push({ id: uid(), name, symbol: emoji, color: state.habits.length % PALETTE.length, createdAt: Date.now() });
+  save();
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+/* ================= Render ================= */
+const $ = (id) => document.getElementById(id);
+
+function renderAll() {
+  renderHeader();
+  renderDays();
+  renderCards();
+  renderNav();
+}
+
+function renderHeader() {
+  const days = weekDays(weekAnchor);
+  const total = state.habits.length * 7;
+  let done = 0;
+  for (const h of state.habits) for (const d of days) if (isChecked(h.id, d)) done++;
+  const p = total === 0 ? 0 : done / total;
+  const C = 2 * Math.PI * 24;
+  $("ring").style.strokeDashoffset = C * (1 - Math.max(0.02, Math.min(p, 1)));
+  $("ringnum").textContent = Math.round(p * 100);
+  const current = key(mondayOf(weekAnchor)) === key(mondayOf(new Date()));
+  $("sub").textContent = current ? "이번 주를 채워볼까요?" : "지난 주 돌아보기";
+}
+
+function renderDays() {
+  const days = weekDays(weekAnchor);
+  const todayK = key(new Date());
+  $("days").innerHTML = days.map((d, i) => {
+    const t = key(d) === todayK ? " today" : "";
+    return `<div class="d${t}">${DAY_SYMS[i]}<span class="dot"></span></div>`;
+  }).join("");
+}
+
+function renderNav() {
+  const current = key(mondayOf(weekAnchor)) === key(mondayOf(new Date()));
+  $("weekrange").textContent = fmtRange(weekDays(weekAnchor));
+  $("nextweek").disabled = current;
+}
+
+function colorOf(h) { return PALETTE[((h.color % 6) + 6) % 6]; }
+
+function renderCards() {
+  const wrap = $("cards");
+  if (state.habits.length === 0) {
+    wrap.innerHTML = `
+      <div class="empty">
+        <div class="plus">＋</div>
+        <h2>첫 갓생 습관을 만들어보세요</h2>
+        <p>탭 한 번으로 매주 체크하는 나만의 루틴</p>
+        <div class="chips">${SUGGESTIONS.map(([n], i) => `<button class="sugg" data-i="${i}">${n}</button>`).join("")}</div>
+      </div>`;
+    wrap.querySelectorAll(".sugg").forEach((b) =>
+      b.addEventListener("click", () => openHabitSheet(null, SUGGESTIONS[+b.dataset.i][0]))
+    );
+    return;
+  }
+  const days = weekDays(weekAnchor);
+  const todayK = key(new Date());
+  wrap.innerHTML = state.habits.map((h) => {
+    const c = colorOf(h);
+    let count = 0;
+    const cells = days.map((d, i) => {
+      const on = isChecked(h.id, d);
+      if (on) count++;
+      const cls = ["cell", on ? "on" : "", key(d) === todayK ? "today-ring" : "", isFuture(d) && !on ? "future" : ""].join(" ").trim();
+      const style = on ? `background:${c};--cell-color:${c}` : `--cell-color:${c}`;
+      return `<button class="${cls}" style="${style}" data-h="${h.id}" data-i="${i}" aria-label="${DAY_SYMS[i]} 완료 ${on ? "됨" : "안 됨"}"><span class="check">✓</span></button>`;
+    }).join("");
+    return `
+      <div class="card" data-edit="${h.id}">
+        <div class="head">
+          <div class="chip" style="background:${c}22">${h.symbol}</div>
+          <div class="name">${esc(h.name)}</div>
+          <div class="badge ${count === 7 ? "full" : ""}" style="${count === 7 ? `background:${c};` : ""}">${count}/7</div>
+        </div>
+        <div class="row">${cells}</div>
+      </div>`;
+  }).join("");
+  wrap.querySelectorAll(".cell").forEach((b) =>
+    b.addEventListener("click", (e) => { e.stopPropagation(); handleToggle(b.dataset.h, days[+b.dataset.i]); })
+  );
+  wrap.querySelectorAll(".card").forEach((c) =>
+    c.addEventListener("click", () => openHabitSheet(c.dataset.edit))
+  );
+}
+
+function esc(s) { return s.replace(/[&<>"']/g, (m) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
+
+/* ================= Toggle + toast ================= */
+function handleToggle(habitId, date) {
+  vibrate(10);
+  toggle(habitId, date);
+  const nowDone = allDoneToday();
+  if (nowDone && !wasAllDoneToday) showToast("오늘의 갓생 완성! 🎉");
+  wasAllDoneToday = nowDone;
+  renderAll();
+}
+function vibrate(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} }
+function showToast(text) {
+  const t = $("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2400);
+}
+
+/* ================= Sheets ================= */
+function showSheet(el) {
+  $("backdrop").classList.add("show");
+  el.classList.add("show");
+}
+function hideSheets() {
+  $("backdrop").classList.remove("show");
+  document.querySelectorAll(".sheet").forEach((s) => s.classList.remove("show"));
+}
+
+function openHabitSheet(habitId, seedName) {
+  editingId = habitId;
+  const habit = habitId ? state.habits.find((h) => h.id === habitId) : null;
+  $("hs-title").textContent = habit ? "습관 편집" : "새 갓생 습관";
+  $("hs-save").textContent = habit ? "저장" : "추가";
+  $("hs-delete").style.display = habit ? "block" : "none";
+  $("hs-sugg-wrap").style.display = habit ? "none" : "block";
+  $("hs-name").value = habit ? habit.name : (seedName || "");
+  sheetEmoji = habit ? habit.symbol : (SUGGESTIONS.find(([n]) => n === seedName)?.[1] || "⭐");
+  renderEmojiGrid();
+  renderPreview();
+  showSheet($("habit-sheet"));
+  if (!habit && !seedName) setTimeout(() => $("hs-name").focus(), 320);
+}
+
+function renderEmojiGrid() {
+  $("hs-emos").innerHTML = EMOJIS.map((e) =>
+    `<button class="emo" data-e="${e}" style="${e === sheetEmoji ? "background:rgba(107,76,245,0.18);outline:2px solid var(--brand)" : ""}">${e}</button>`
+  ).join("");
+  $("hs-emos").querySelectorAll(".emo").forEach((b) =>
+    b.addEventListener("click", () => { sheetEmoji = b.dataset.e; renderEmojiGrid(); renderPreview(); })
+  );
+}
+
+function renderPreview() {
+  const idx = state.habits.findIndex((h) => h.id === editingId);
+  const color = PALETTE[(idx === -1 ? state.habits.length : idx) % 6];
+  const name = $("hs-name").value.trim();
+  $("pv-chip").textContent = sheetEmoji;
+  $("pv-chip").style.background = color + "22";
+  $("pv-name").textContent = name || "습관 이름 미리보기";
+  $("pv-name").style.color = name ? "var(--label)" : "var(--label3)";
+  $("pv-dots").innerHTML = Array.from({length: 7}, (_, i) =>
+    `<span class="${i < 3 ? "f" : ""}" style="${i < 3 ? `background:${color}` : ""}"></span>`
+  ).join("");
+  const filled = name.length > 0;
+  $("hs-save").disabled = !filled;
+}
+
+function saveHabit() {
+  const name = $("hs-name").value.trim();
+  if (!name) return;
+  if (editingId) {
+    const h = state.habits.find((h) => h.id === editingId);
+    if (h) { h.name = name; h.symbol = sheetEmoji; }
+  } else {
+    addHabit(name, sheetEmoji);
+  }
+  save();
+  hideSheets();
+  renderAll();
+}
+
+function deleteHabit() {
+  const h = state.habits.find((h) => h.id === editingId);
+  if (!h) return;
+  if (!confirm(`'${h.name}' 습관을 삭제할까요?\n지난 기록도 함께 사라져요`)) return;
+  state.habits = state.habits.filter((x) => x.id !== editingId);
+  const prefix = editingId + "|";
+  state.checks = new Set([...state.checks].filter((k) => !k.startsWith(prefix)));
+  save();
+  hideSheets();
+  renderAll();
+}
+
+/* ================= Settings: backup ================= */
+function doExport() {
+  const data = {
+    app: "godlife", version: 1, exportedAt: new Date().toISOString(),
+    habits: state.habits, checks: [...state.checks]
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  const d = new Date();
+  a.href = URL.createObjectURL(blob);
+  a.download = `godlife-backup-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  showToast("백업 파일을 저장했어요");
+}
+
+function doImport(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (data.app !== "godlife" || !Array.isArray(data.habits)) throw new Error("bad format");
+      const n = data.habits.length, c = Array.isArray(data.checks) ? data.checks.length : 0;
+      if (!confirm(`습관 ${n}개, 체크 ${c}회 기록을 불러옵니다.\n현재 데이터는 대체돼요. 계속할까요?`)) return;
+      state.habits = data.habits.map((h) => ({
+        id: typeof h.id === "string" ? h.id : uid(),
+        name: String(h.name).slice(0, 30),
+        symbol: typeof h.symbol === "string" ? h.symbol : "⭐",
+        color: Number.isInteger(h.color) ? h.color : 0,
+        createdAt: h.createdAt || Date.now()
+      }));
+      state.checks = new Set(data.checks.filter((k) => typeof k === "string"));
+      save();
+      renderAll();
+      openSettings();
+      showToast("기록을 불러왔어요");
+    } catch (e) {
+      alert("백업 파일을 읽을 수 없어요.\n갓생 앱에서 내보낸 파일인지 확인해주세요.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+function openSettings() {
+  $("stat-habits").textContent = state.habits.length + "개";
+  $("stat-checks").textContent = state.checks.size + "회";
+  showSheet($("settings-sheet"));
+}
+
+/* ================= Onboarding ================= */
+const obPages = $("ob-pages");
+function obPage() { return Math.round(obPages.scrollLeft / obPages.clientWidth); }
+function obUpdate() {
+  const p = obPage();
+  [...$("ob-dots").children].forEach((d, i) => d.classList.toggle("on", i === p));
+  $("ob-next").textContent = p === 2 ? "갓생 시작하기" : "다음";
+}
+obPages.addEventListener("scroll", () => requestAnimationFrame(obUpdate), { passive: true });
+$("ob-next").addEventListener("click", () => {
+  const p = obPage();
+  if (p < 2) obPages.scrollTo({ left: (p + 1) * obPages.clientWidth, behavior: "smooth" });
+  else finishOnboarding();
+});
+$("ob-skip").addEventListener("click", finishOnboarding);
+function finishOnboarding() {
+  state.onboarded = true;
+  save();
+  $("onboarding").classList.add("hide");
+  $("app").classList.add("fade-in");
+}
+
+/* Mini week strip in onboarding */
+$("ob-mini").innerHTML = [1,1,0,1,1,0,0].map((on, i) =>
+  `<span class="${on ? "on" : ""}" style="${on ? "background:linear-gradient(135deg,#578CF2,#7DA6FF)" : ""}">✓</span>`
+).join("");
+
+/* ================= Week swipe ================= */
+let touchX = 0, touchY = 0, swiping = false;
+document.addEventListener("touchstart", (e) => {
+  if (document.querySelector(".sheet.show")) return;
+  touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; swiping = true;
+}, { passive: true });
+document.addEventListener("touchend", (e) => {
+  if (!swiping) return;
+  swiping = false;
+  const dx = e.changedTouches[0].clientX - touchX;
+  const dy = e.changedTouches[0].clientY - touchY;
+  if (Math.abs(dx) < 64 || Math.abs(dy) > 56) return;
+  if (dx < 0) shiftWeek(+1); else shiftWeek(-1);
+}, { passive: true });
+
+function shiftWeek(delta) {
+  if (delta > 0 && key(mondayOf(weekAnchor)) === key(mondayOf(new Date()))) return;
+  weekAnchor.setDate(weekAnchor.getDate() + delta * 7);
+  renderAll();
+}
+
+/* ================= Events ================= */
+$("prevweek").addEventListener("click", () => shiftWeek(-1));
+$("nextweek").addEventListener("click", () => shiftWeek(+1));
+$("addbtn").addEventListener("click", () => openHabitSheet(null));
+$("hs-cancel").addEventListener("click", hideSheets);
+$("hs-save").addEventListener("click", saveHabit);
+$("hs-delete").addEventListener("click", deleteHabit);
+$("hs-name").addEventListener("input", renderPreview);
+$("hs-name").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.target.blur(); } });
+$("backdrop").addEventListener("click", hideSheets);
+$("exp").addEventListener("click", doExport);
+$("imp").addEventListener("click", () => $("imp-file").click());
+$("imp-file").addEventListener("change", (e) => {
+  if (e.target.files[0]) doImport(e.target.files[0]);
+  e.target.value = "";
+});
+$("reset").addEventListener("click", () => {
+  if (!confirm("모든 습관과 기록을 삭제할까요?\n이 작업은 되돌릴 수 없어요.")) return;
+  localStorage.removeItem(STORE_KEY);
+  location.reload();
+});
+
+/* Header tap = settings (discoverable) */
+document.querySelector(".header h1").addEventListener("click", openSettings);
+
+/* ================= Init ================= */
+wasAllDoneToday = allDoneToday();
+if (!state.onboarded) $("onboarding").classList.remove("hide");
+renderAll();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>
