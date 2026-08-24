@@ -170,8 +170,9 @@
     max-height: 92dvh; overflow-y: auto; max-width: 480px; margin: 0 auto;
   }
   .sheet.show { transform: translateY(0); }
-  .sheet .grab { width: 36px; height: 5px; border-radius: 3px; background: var(--fill); margin: 0 auto 12px; }
-  .sheet h3 { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 18px; }
+  .sheet .grab { width: 44px; height: 20px; margin: 0 auto 4px; display: flex; align-items: center; justify-content: center; cursor: grab; touch-action: none; }
+  .sheet .grab::after { content: ""; width: 36px; height: 5px; border-radius: 3px; background: var(--fill); }
+  .sheet h3 { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 18px; cursor: grab; touch-action: none; }
   .sheet .lbl { font-size: 12px; font-weight: 600; color: var(--label2); margin: 16px 0 8px; }
   .sheet input[type=text] {
     width: 100%; height: 48px; border: none; outline: none;
@@ -646,16 +647,32 @@ function doExport() {
     app: "godlife", version: 1, exportedAt: new Date().toISOString(),
     habits: state.habits, checks: [...state.checks]
   };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
   const d = new Date();
-  a.href = URL.createObjectURL(blob);
-  a.download = `godlife-backup-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  showToast("백업 파일을 저장했어요");
+  const filename = `godlife-backup-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`;
+  const file = new File([JSON.stringify(data, null, 2)], filename, { type: "application/json" });
+
+  function downloadFallback() {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(file);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    showToast("백업 파일을 저장했어요");
+  }
+
+  // iOS 홈 화면 앱에서는 공유 시트가 가장 확실: "파일에 저장" 선택
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: "갓생 백업" })
+      .then(() => showToast("백업 파일을 공유했어요"))
+      .catch((err) => {
+        if (err && err.name === "AbortError") return;
+        downloadFallback();
+      });
+  } else {
+    downloadFallback();
+  }
 }
 
 function doImport(file) {
@@ -690,6 +707,40 @@ function openSettings() {
   $("stat-checks").textContent = state.checks.size + "회";
   showSheet($("settings-sheet"));
 }
+
+/* ================= Sheet drag-to-dismiss ================= */
+document.querySelectorAll(".sheet").forEach((sheet) => {
+  let startY = 0, curY = 0, dragging = false;
+
+  function start(e) {
+    dragging = true;
+    startY = e.clientY;
+    curY = 0;
+    sheet.style.transition = "none";
+    sheet.style.cursor = "grabbing";
+    try { sheet.setPointerCapture(e.pointerId); } catch (err) {}
+  }
+  function move(e) {
+    if (!dragging) return;
+    curY = e.clientY - startY;
+    if (curY > 0) sheet.style.transform = `translateY(${curY}px)`;
+  }
+  function end() {
+    if (!dragging) return;
+    dragging = false;
+    sheet.style.transition = "";
+    sheet.style.transform = "";
+    sheet.style.cursor = "";
+    if (curY > 90) hideSheets();
+  }
+
+  sheet.querySelectorAll(".grab, h3").forEach((h) => {
+    h.addEventListener("pointerdown", start);
+    h.addEventListener("pointermove", move);
+    h.addEventListener("pointerup", end);
+    h.addEventListener("pointercancel", end);
+  });
+});
 
 /* ================= Onboarding ================= */
 const obPages = $("ob-pages");
