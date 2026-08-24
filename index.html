@@ -53,6 +53,7 @@
     color: var(--label);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: none;
+    min-height: 100vh;
     min-height: 100dvh;
   }
   button { font-family: inherit; border: none; background: none; color: inherit; cursor: pointer; touch-action: manipulation; }
@@ -67,7 +68,16 @@
   /* ---------- Header ---------- */
   .header { display: flex; align-items: center; justify-content: space-between; padding-top: 6px; }
   .header h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; }
+  .header h1.named { font-size: 24px; }
   .header .sub { font-size: 13px; color: var(--label2); margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .gearbtn {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--card);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow); transition: transform 0.12s;
+  }
+  .gearbtn:active { transform: scale(0.88) rotate(30deg); }
+  .gearbtn svg { width: 18px; height: 18px; stroke: var(--label2); }
   .ring-wrap { position: relative; width: 54px; height: 54px; flex-shrink: 0; }
   .ring-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
   .ring-track { fill: none; stroke: var(--fill); stroke-width: 6; }
@@ -167,12 +177,12 @@
     background: var(--card); border-radius: 24px 24px 0 0;
     padding: 14px 20px calc(16px + var(--sab));
     transform: translateY(105%); transition: transform 0.3s cubic-bezier(0.3, 1, 0.4, 1);
-    max-height: 92dvh; overflow-y: auto; max-width: 480px; margin: 0 auto;
+    max-height: 92vh; max-height: 92dvh; overflow-y: auto; max-width: 480px; margin: 0 auto;
   }
   .sheet.show { transform: translateY(0); }
-  .sheet .grab { width: 44px; height: 20px; margin: 0 auto 4px; display: flex; align-items: center; justify-content: center; cursor: grab; touch-action: none; }
+  .sheet .grab { width: 44px; height: 20px; margin: 0 auto 4px; display: flex; align-items: center; justify-content: center; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
   .sheet .grab::after { content: ""; width: 36px; height: 5px; border-radius: 3px; background: var(--fill); }
-  .sheet h3 { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 18px; cursor: grab; touch-action: none; }
+  .sheet h3 { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 18px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
   .sheet .lbl { font-size: 12px; font-weight: 600; color: var(--label2); margin: 16px 0 8px; }
   .sheet input[type=text] {
     width: 100%; height: 48px; border: none; outline: none;
@@ -228,6 +238,56 @@
   }
   #toast.show { transform: translate(-50%, 0); opacity: 1; }
 
+  /* ---------- Tabs ---------- */
+  :root { --tabbg: rgba(242, 242, 247, 0.92); }
+  @media (prefers-color-scheme: dark) { :root { --tabbg: rgba(12, 12, 14, 0.92); } }
+  #app { padding-bottom: calc(96px + var(--sab)); }
+  #tabbar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+    display: flex; background: var(--tabbg);
+    -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);
+    border-top: 1px solid var(--sep);
+    padding: 6px 12px calc(6px + var(--sab));
+  }
+  .tabbtn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 600; color: var(--label3); padding: 5px 0;
+    transition: color 0.2s, transform 0.1s;
+  }
+  .tabbtn:active { transform: scale(0.94); }
+  .tabbtn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .tabbtn.active { color: var(--brand); }
+
+  /* ---------- Calendar ---------- */
+  #calapp { max-width: 480px; margin: 0 auto; padding: calc(10px + var(--sat)) 20px calc(96px + var(--sab)); display: none; }
+  #calapp.active { display: block; }
+  .cal-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; padding-top: 6px; }
+  .cal-stats { font-size: 13px; color: var(--label2); margin-top: 4px; }
+  .cal-stats b { color: var(--brand); font-weight: 700; }
+  .cal-head { display: flex; align-items: center; justify-content: space-between; margin: 20px 0 8px; }
+  .cal-month { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .cal-nav { display: flex; gap: 8px; }
+  .cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+  .cal-dow span { text-align: center; font-size: 11px; font-weight: 700; color: var(--label2); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal-cell { aspect-ratio: 0.92; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+  .cal-cell .num { font-size: 12px; font-weight: 600; color: var(--label2); font-variant-numeric: tabular-nums; }
+  .cal-cell .sq {
+    width: 24px; height: 24px; border-radius: 8px; background: var(--fill2);
+    display: flex; align-items: center; justify-content: center; font-size: 11px; color: #fff;
+  }
+  .cal-cell.today .num { color: var(--brand); font-weight: 800; }
+  .cal-cell.l1 .sq { background: rgba(107, 76, 245, 0.22); }
+  .cal-cell.l2 .sq { background: rgba(107, 76, 245, 0.45); }
+  .cal-cell.l3 .sq { background: rgba(107, 76, 245, 0.7); }
+  .cal-cell.l4 .sq { background: var(--grad); box-shadow: 0 2px 8px rgba(107, 76, 245, 0.4); }
+  .cal-legend { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 18px; font-size: 11px; color: var(--label3); }
+  .cal-legend i { width: 14px; height: 14px; border-radius: 5px; background: var(--fill2); display: inline-block; }
+  .cal-legend .l1 { background: rgba(107, 76, 245, 0.22); }
+  .cal-legend .l2 { background: rgba(107, 76, 245, 0.45); }
+  .cal-legend .l3 { background: rgba(107, 76, 245, 0.7); }
+  .cal-legend .l4 { background: var(--grad); }
+
   /* ---------- Onboarding ---------- */
   #onboarding {
     position: fixed; inset: 0; z-index: 100; background: var(--bg);
@@ -264,9 +324,18 @@
   .ob-dots i.on { width: 22px; background: var(--label); }
   #ob-next {
     margin: 0 24px; height: 56px; border-radius: 999px; background: var(--grad);
-    color: #fff; font-size: 17px; font-weight: 700; transition: transform 0.12s;
+    color: #fff; font-size: 17px; font-weight: 700; transition: transform 0.12s, opacity 0.2s;
   }
   #ob-next:active { transform: scale(0.97); }
+  #ob-next[disabled] { opacity: 0.35; pointer-events: none; }
+  .ob-name {
+    width: 220px; border: none; outline: none; background: transparent;
+    border-bottom: 2px solid var(--fill); text-align: center;
+    font-size: 22px; font-weight: 700; color: var(--label); padding: 8px 4px;
+    transition: border-color 0.2s;
+  }
+  .ob-name:focus { border-color: var(--brand); }
+  .ob-name::placeholder { color: var(--label3); font-weight: 500; font-size: 18px; }
 
   .fade-in { animation: fadeIn 0.3s ease-out; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -309,23 +378,39 @@
 이번 주는 하얀 칸부터 다시 시작해요</p></div>
       <div style="height:62px"></div>
     </div>
+    <div class="ob-page">
+      <div class="ob-icon" style="background:linear-gradient(135deg,#6B4CF5,#A670FF);box-shadow:0 12px 24px rgba(107,76,245,0.35)">✍️</div>
+      <div><div class="ob-title">이름을 알려주세요</div>
+      <p class="ob-sub" style="margin-top:12px">당신만의 갓생을
+만들어갈 준비 됐나요?</p>
+      <input class="ob-name" id="ob-name" placeholder="예: 정재현" maxlength="12" autocomplete="off" enterkeyhint="done"></div>
+      <div style="height:62px"></div>
+    </div>
   </div>
-  <div class="ob-dots" id="ob-dots"><i class="on"></i><i></i><i></i></div>
+  <div class="ob-dots" id="ob-dots"><i class="on"></i><i></i><i></i><i></i></div>
   <button id="ob-next">다음</button>
 </div>
 
 <div id="app">
   <div class="header">
     <div>
-      <h1>갓생</h1>
+      <h1 id="apptitle">갓생</h1>
       <div class="sub" id="sub">이번 주를 채워볼까요?</div>
     </div>
-    <div class="ring-wrap" aria-label="이번 주 달성률">
-      <svg viewBox="0 0 54 54">
-        <circle class="ring-track" cx="27" cy="27" r="24"/>
-        <circle class="ring-bar" id="ring" cx="27" cy="27" r="24" stroke-dasharray="150.8" stroke-dashoffset="150.8"/>
-      </svg>
-      <div class="ring-num" id="ringnum">0</div>
+    <div class="header-right">
+      <button class="gearbtn" id="gearbtn" aria-label="설정">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+      <div class="ring-wrap" aria-label="이번 주 달성률">
+        <svg viewBox="0 0 54 54">
+          <circle class="ring-track" cx="27" cy="27" r="24"/>
+          <circle class="ring-bar" id="ring" cx="27" cy="27" r="24" stroke-dasharray="150.8" stroke-dashoffset="150.8"/>
+        </svg>
+        <div class="ring-num" id="ringnum">0</div>
+      </div>
     </div>
   </div>
 
@@ -341,6 +426,34 @@
   <button id="addbtn">＋ 새 갓생 습관 만들기</button>
 </div>
 
+<div id="calapp">
+  <div class="cal-title" id="cal-title">갓생 캘린더</div>
+  <div class="cal-stats" id="cal-stats"></div>
+  <div class="cal-head">
+    <div class="cal-nav">
+      <button class="navbtn" id="cal-prev" aria-label="이전 달">‹</button>
+    </div>
+    <div class="cal-month" id="cal-month"></div>
+    <div class="cal-nav">
+      <button class="navbtn" id="cal-next" aria-label="다음 달">›</button>
+    </div>
+  </div>
+  <div class="cal-dow" id="cal-dow"></div>
+  <div class="cal-grid" id="cal-grid"></div>
+  <div class="cal-legend">적음 <i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> 많음 · ★ 완벽한 갓생</div>
+</div>
+
+<nav id="tabbar">
+  <button class="tabbtn active" data-tab="home" aria-label="홈">
+    <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h5v-6h4v6h5V9.5"/></svg>
+    <span>홈</span>
+  </button>
+  <button class="tabbtn" data-tab="cal" aria-label="갓생 캘린더">
+    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M8.5 15l2.2 2.2L15.5 12.5" stroke-width="2"/></svg>
+    <span>갓생 캘린더</span>
+  </button>
+</nav>
+
 <div id="backdrop"></div>
 
 <div class="sheet" id="habit-sheet">
@@ -354,7 +467,7 @@
     </div>
   </div>
   <div class="lbl">이름</div>
-  <input type="text" id="hs-name" placeholder="예: 저녁 9시 이후 금식" maxlength="30">
+  <input type="text" id="hs-name" placeholder="예: 저녁 9시 이후 금식" maxlength="30" enterkeyhint="done" autocomplete="off">
   <div class="lbl">아이콘</div>
   <div class="emogrid" id="hs-emos"></div>
   <div id="hs-sugg-wrap">
@@ -371,6 +484,7 @@
 <div class="sheet" id="settings-sheet">
   <div class="grab"></div>
   <h3>설정</h3>
+  <div class="setrow"><span>이름</span><button class="setbtn" id="editname">편집</button></div>
   <div class="setrow"><span>기록 내보내기</span><button class="setbtn" id="exp">백업 파일 받기</button></div>
   <div class="setrow"><span>기록 가져오기</span><button class="setbtn" id="imp">파일 선택</button></div>
   <div class="setrow"><span>습관</span><span class="val" id="stat-habits">0개</span></div>
@@ -409,16 +523,17 @@ function load() {
       return {
         habits: Array.isArray(s.habits) ? s.habits : [],
         checks: new Set(Array.isArray(s.checks) ? s.checks : []),
-        onboarded: !!s.onboarded
+        onboarded: !!s.onboarded,
+        name: typeof s.name === "string" ? s.name : ""
       };
     }
   } catch (e) { console.warn("load failed", e); }
-  return { habits: [], checks: new Set(), onboarded: false };
+  return { habits: [], checks: new Set(), onboarded: false, name: "" };
 }
 function save() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      habits: state.habits, checks: [...state.checks], onboarded: state.onboarded
+      habits: state.habits, checks: [...state.checks], onboarded: state.onboarded, name: state.name
     }));
   } catch (e) { console.warn("save failed", e); }
 }
@@ -472,6 +587,10 @@ function renderAll() {
 }
 
 function renderHeader() {
+  const title = $("apptitle");
+  const named = !!state.name.trim();
+  title.textContent = named ? state.name.trim() + "의 갓생" : "갓생";
+  title.classList.toggle("named", named);
   const days = weekDays(weekAnchor);
   const total = state.habits.length * 7;
   let done = 0;
@@ -553,7 +672,10 @@ function handleToggle(habitId, date) {
   vibrate(10);
   toggle(habitId, date);
   const nowDone = allDoneToday();
-  if (nowDone && !wasAllDoneToday) showToast("오늘의 갓생 완성! 🎉");
+  if (nowDone && !wasAllDoneToday) {
+    const who = state.name.trim() ? state.name.trim() + "의 " : "";
+    showToast(who + "갓생 완성! 🎉");
+  }
   wasAllDoneToday = nowDone;
   renderAll();
 }
@@ -645,7 +767,7 @@ function deleteHabit() {
 function doExport() {
   const data = {
     app: "godlife", version: 1, exportedAt: new Date().toISOString(),
-    habits: state.habits, checks: [...state.checks]
+    name: state.name, habits: state.habits, checks: [...state.checks]
   };
   const d = new Date();
   const filename = `godlife-backup-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`;
@@ -691,6 +813,7 @@ function doImport(file) {
         createdAt: h.createdAt || Date.now()
       }));
       state.checks = new Set(data.checks.filter((k) => typeof k === "string"));
+      state.name = typeof data.name === "string" ? data.name.slice(0, 12) : "";
       save();
       renderAll();
       openSettings();
@@ -703,10 +826,110 @@ function doImport(file) {
 }
 
 function openSettings() {
+  $("editname").textContent = state.name.trim() || "설정";
   $("stat-habits").textContent = state.habits.length + "개";
   $("stat-checks").textContent = state.checks.size + "회";
   showSheet($("settings-sheet"));
 }
+
+/* ================= Tabs & Calendar ================= */
+let calAnchor = new Date();
+let currentTab = "home";
+
+document.querySelectorAll(".tabbtn").forEach((btn) =>
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab))
+);
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".tabbtn").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+  $("app").style.display = tab === "home" ? "" : "none";
+  $("calapp").classList.toggle("active", tab === "cal");
+  if (tab === "cal") renderCalendar();
+}
+
+function firstCheckKey() {
+  let min = null;
+  for (const k of state.checks) {
+    const ds = k.split("|")[1];
+    if (ds && (!min || ds < min)) min = ds;
+  }
+  return min;
+}
+
+function dPlus() {
+  const first = firstCheckKey();
+  if (!first) return null;
+  const [y, m, d] = first.split("-").map(Number);
+  return Math.round((startOfDay(new Date()) - new Date(y, m - 1, d)) / 86400000) + 1;
+}
+
+function dayLevel(d) {
+  const total = state.habits.length;
+  if (total === 0) return { level: 0, perfect: false };
+  let c = 0;
+  for (const h of state.habits) if (isChecked(h.id, d)) c++;
+  const ratio = c / total;
+  const level = ratio === 0 ? 0 : ratio < 0.34 ? 1 : ratio < 0.67 ? 2 : ratio < 1 ? 3 : 4;
+  return { level, perfect: ratio === 1 };
+}
+
+function renderCalendar() {
+  const name = state.name.trim();
+  $("cal-title").textContent = name ? name + "의 갓생 캘린더" : "갓생 캘린더";
+
+  const dp = dPlus();
+  const perfect = countPerfectDays();
+  const parts = [];
+  if (dp !== null) parts.push(`갓생 <b>D+${dp}</b>`);
+  parts.push(`총 체크 ${state.checks.size}회`);
+  parts.push(`완벽한 날 ${perfect}일`);
+  $("cal-stats").innerHTML = parts.join(" · ");
+
+  const y = calAnchor.getFullYear(), m = calAnchor.getMonth();
+  $("cal-month").textContent = `${y}년 ${m + 1}월`;
+  const now = new Date();
+  $("cal-next").disabled = y === now.getFullYear() && m === now.getMonth();
+
+  $("cal-dow").innerHTML = DAY_SYMS.map((s) => `<span>${s}</span>`).join("");
+
+  const first = new Date(y, m, 1);
+  const lead = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const todayK = key(new Date());
+  let html = "";
+  for (let i = 0; i < lead; i++) html += "<div class='cal-cell'></div>";
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = new Date(y, m, day);
+    const k = key(d);
+    const { level, perfect: isPerfect } = dayLevel(d);
+    const cls = ["cal-cell", level ? "l" + level : "", k === todayK ? "today" : ""].join(" ").trim();
+    html += `<div class="${cls}"><span class="num">${day}</span><span class="sq">${isPerfect ? "★" : ""}</span></div>`;
+  }
+  $("cal-grid").innerHTML = html;
+}
+
+function countPerfectDays() {
+  const total = state.habits.length;
+  if (total === 0) return 0;
+  const byDay = new Map();
+  for (const k of state.checks) {
+    const ds = k.split("|")[1];
+    byDay.set(ds, (byDay.get(ds) || 0) + 1);
+  }
+  let n = 0;
+  for (const count of byDay.values()) if (count >= total) n++;
+  return n;
+}
+
+$("cal-prev").addEventListener("click", () => {
+  calAnchor = new Date(calAnchor.getFullYear(), calAnchor.getMonth() - 1, 1);
+  renderCalendar();
+});
+$("cal-next").addEventListener("click", () => {
+  calAnchor = new Date(calAnchor.getFullYear(), calAnchor.getMonth() + 1, 1);
+  renderCalendar();
+});
 
 /* ================= Sheet drag-to-dismiss ================= */
 document.querySelectorAll(".sheet").forEach((sheet) => {
@@ -736,30 +959,42 @@ document.querySelectorAll(".sheet").forEach((sheet) => {
 
   sheet.querySelectorAll(".grab, h3").forEach((h) => {
     h.addEventListener("pointerdown", start);
-    h.addEventListener("pointermove", move);
-    h.addEventListener("pointerup", end);
-    h.addEventListener("pointercancel", end);
   });
+  sheet.addEventListener("pointermove", move);
+  sheet.addEventListener("pointerup", end);
+  sheet.addEventListener("pointercancel", end);
 });
 
 /* ================= Onboarding ================= */
 const obPages = $("ob-pages");
+const OB_LAST = 3;
 function obPage() { return Math.round(obPages.scrollLeft / obPages.clientWidth); }
 function obUpdate() {
   const p = obPage();
   [...$("ob-dots").children].forEach((d, i) => d.classList.toggle("on", i === p));
-  $("ob-next").textContent = p === 2 ? "갓생 시작하기" : "다음";
+  const name = $("ob-name").value.trim();
+  if (p === OB_LAST) {
+    $("ob-next").textContent = name ? name + "의 갓생 시작하기" : "이름을 입력해주세요";
+    $("ob-next").disabled = !name;
+  } else {
+    $("ob-next").textContent = "다음";
+    $("ob-next").disabled = false;
+  }
 }
 obPages.addEventListener("scroll", () => requestAnimationFrame(obUpdate), { passive: true });
+$("ob-name").addEventListener("input", obUpdate);
+$("ob-name").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
 $("ob-next").addEventListener("click", () => {
   const p = obPage();
-  if (p < 2) obPages.scrollTo({ left: (p + 1) * obPages.clientWidth, behavior: "smooth" });
+  if (p < OB_LAST) obPages.scrollTo({ left: (p + 1) * obPages.clientWidth, behavior: "smooth" });
   else finishOnboarding();
 });
 $("ob-skip").addEventListener("click", finishOnboarding);
 function finishOnboarding() {
+  state.name = $("ob-name").value.trim().slice(0, 12);
   state.onboarded = true;
   save();
+  renderAll();
   $("onboarding").classList.add("hide");
   $("app").classList.add("fade-in");
 }
@@ -773,6 +1008,8 @@ $("ob-mini").innerHTML = [1,1,0,1,1,0,0].map((on, i) =>
 let touchX = 0, touchY = 0, swiping = false;
 document.addEventListener("touchstart", (e) => {
   if (document.querySelector(".sheet.show")) return;
+  if (!$("onboarding").classList.contains("hide")) return;
+  if (currentTab !== "home") return;
   touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; swiping = true;
 }, { passive: true });
 document.addEventListener("touchend", (e) => {
@@ -801,6 +1038,16 @@ $("hs-name").addEventListener("input", renderPreview);
 $("hs-name").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.target.blur(); } });
 $("backdrop").addEventListener("click", hideSheets);
 $("exp").addEventListener("click", doExport);
+$("editname").addEventListener("click", () => {
+  const v = prompt("이름을 입력하세요", state.name.trim());
+  if (v === null) return;
+  state.name = v.trim().slice(0, 12);
+  save();
+  renderAll();
+  renderCalendar();
+  openSettings();
+  showToast(state.name ? state.name + "의 갓생으로 바꿨어요" : "이름을 초기화했어요");
+});
 $("imp").addEventListener("click", () => $("imp-file").click());
 $("imp-file").addEventListener("change", (e) => {
   if (e.target.files[0]) doImport(e.target.files[0]);
@@ -812,7 +1059,12 @@ $("reset").addEventListener("click", () => {
   location.reload();
 });
 
-/* Header tap = settings (discoverable) */
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") hideSheets();
+});
+
+/* Settings */
+$("gearbtn").addEventListener("click", openSettings);
 document.querySelector(".header h1").addEventListener("click", openSettings);
 
 /* ================= Init ================= */
