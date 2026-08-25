@@ -1359,7 +1359,6 @@ let obCur = 0;
 function obPage() { return Math.max(0, Math.min(OB_LAST, Math.round(obPages.scrollLeft / Math.max(1, obPages.clientWidth)))); }
 function obUpdate() {
   const p = obPage();
-  obCur = p;
   [...$("ob-dots").children].forEach((d, i) => d.classList.toggle("on", i === p));
   const name = $("ob-name").value.trim();
   if (p === OB_LAST) {
@@ -1374,9 +1373,26 @@ function obUpdate() {
     $("ob-next").disabled = false;
   }
 }
-obPages.addEventListener("scroll", obUpdate, { passive: true });
+let obSettleTimer = null;
+let obProgTimer = null;
+let obProg = false;
+obPages.addEventListener("scroll", () => {
+  obUpdate();
+  if (obProg) return;
+  clearTimeout(obSettleTimer);
+  obSettleTimer = setTimeout(() => { obCur = obPage(); }, 120);
+}, { passive: true });
+function obScrollTo(p) {
+  obCur = Math.max(0, Math.min(OB_LAST, p));
+  obProg = true;
+  obPages.scrollTo({ left: obCur * obPages.clientWidth, behavior: "smooth" });
+  clearTimeout(obProgTimer);
+  obProgTimer = setTimeout(() => { obProg = false; obCur = obPage(); }, 650);
+}
 function obResync() {
   if (!obPages.clientWidth) return;
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA")) return;
   obPages.scrollTo({ left: obCur * obPages.clientWidth });
   obUpdate();
 }
@@ -1389,8 +1405,7 @@ $("ob-name").addEventListener("keydown", (e) => { if (e.key === "Enter") e.targe
   $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
 });
 $("ob-next").addEventListener("click", () => {
-  const p = obPage();
-  if (p < OB_LAST) obPages.scrollTo({ left: (p + 1) * obPages.clientWidth, behavior: "smooth" });
+  if (obCur < OB_LAST) obScrollTo(obCur + 1);
   else finishOnboarding();
 });
 $("ob-skip").addEventListener("click", finishOnboarding);
