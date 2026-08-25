@@ -346,6 +346,34 @@
   .cal-legend .l3 { background: rgba(107, 76, 245, 0.7); }
   .cal-legend .l4 { background: var(--grad); }
 
+  /* ---------- Monthly review ---------- */
+  .review-btn {
+    width: 100%; margin-top: 14px; height: 46px; border-radius: 14px;
+    background: var(--card); color: var(--label); font-size: 14px; font-weight: 600;
+    box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: transform 0.12s;
+  }
+  .review-btn:active { transform: scale(0.98); }
+  .review-hero { text-align: center; padding: 6px 0 2px; }
+  .review-hero .big { font-size: 40px; font-weight: 800; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  .review-hero .big small { font-size: 16px; font-weight: 700; color: var(--label2); }
+  .review-hero .cap { font-size: 12px; color: var(--label2); margin-top: 2px; }
+  .review-theme {
+    margin: 14px 0 4px; padding: 12px 14px; border-radius: 14px; text-align: center;
+    background: linear-gradient(135deg, rgba(107, 76, 245, 0.08), rgba(166, 112, 255, 0.12));
+  }
+  .review-theme .t { font-size: 14px; font-weight: 700; color: var(--brand); }
+  .review-theme .v { font-size: 12px; color: var(--label2); margin-top: 2px; }
+  .review-theme.none { color: var(--label3); font-size: 12px; }
+  .review-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .review-row .em { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+  .review-row .nm { font-size: 13px; font-weight: 600; width: 84px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .review-row .bar { flex: 1; height: 8px; border-radius: 4px; background: var(--fill2); overflow: hidden; }
+  .review-row .bar i { display: block; height: 100%; border-radius: 4px; background: var(--grad); transition: width 0.5s cubic-bezier(0.25, 0.8, 0.35, 1); }
+  .review-row .pc { font-size: 11px; font-weight: 700; color: var(--label2); width: 34px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .review-verdict { text-align: center; font-size: 13px; font-weight: 600; color: var(--label); background: var(--fill2); border-radius: 12px; padding: 11px 14px; margin-top: 16px; }
+  .review-empty { text-align: center; padding: 26px 10px 10px; font-size: 13px; color: var(--label2); line-height: 1.6; }
+
   /* ---------- Onboarding ---------- */
   #onboarding {
     position: fixed; inset: 0; z-index: 100; background: var(--bg);
@@ -513,6 +541,7 @@
   <div class="cal-dow" id="cal-dow"></div>
   <div class="cal-grid" id="cal-grid"></div>
   <div class="cal-legend">적음 <i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> 많음 · ★ 완벽한 갓생</div>
+  <button class="review-btn" id="review-btn">📋 <span id="review-btn-label">리뷰</span></button>
 </div>
 
 <nav id="tabbar">
@@ -566,6 +595,15 @@
     <button class="btn primary" id="th-save">저장</button>
   </div>
   <button class="btn danger" id="th-delete" style="display:none">테마 지우기</button>
+</div>
+
+<div class="sheet" id="review-sheet">
+  <div class="grab"></div>
+  <h3 id="review-title">월말 리뷰</h3>
+  <div id="review-body"></div>
+  <div class="actions">
+    <button class="btn ghost" id="review-close">닫기</button>
+  </div>
 </div>
 
 <div class="sheet" id="settings-sheet">
@@ -693,10 +731,12 @@ function monthPerfect(y, m) {
   const total = state.habits.length;
   if (total === 0) return 0;
   const prefix = y + "-" + String(m + 1).padStart(2, "0");
+  const todayK = key(new Date());
   const byDay = new Map();
   for (const k of state.checks) {
     const ds = k.split("|")[1];
-    if (ds && ds.startsWith(prefix)) byDay.set(ds, (byDay.get(ds) || 0) + 1);
+    if (!ds || !ds.startsWith(prefix) || ds > todayK) continue;
+    byDay.set(ds, (byDay.get(ds) || 0) + 1);
   }
   let n = 0;
   for (const c of byDay.values()) if (c >= total) n++;
@@ -1033,8 +1073,14 @@ function doImport(file) {
         color: Number.isInteger(h.color) ? h.color : 0,
         createdAt: h.createdAt || Date.now()
       }));
-      state.checks = new Set(Array.isArray(data.checks) ? data.checks.filter((k) => typeof k === "string") : []);
-      state.skips = new Set(Array.isArray(data.skips) ? data.skips.filter((k) => typeof k === "string") : []);
+      const todayK = key(new Date());
+      const validKey = (k) => {
+        if (typeof k !== "string") return false;
+        const ds = k.split("|")[1];
+        return !!ds && ds <= todayK;
+      };
+      state.checks = new Set(Array.isArray(data.checks) ? data.checks.filter(validKey) : []);
+      state.skips = new Set(Array.isArray(data.skips) ? data.skips.filter(validKey) : []);
       state.name = typeof data.name === "string" ? data.name.slice(0, 12) : "";
       state.themes = Array.isArray(data.themes) ? data.themes.filter((t) => t && typeof t.month === "string" && typeof t.title === "string").map((t) => ({ month: t.month, title: String(t.title).slice(0, 30), vow: typeof t.vow === "string" ? String(t.vow).slice(0, 60) : "" })) : [];
       save();
@@ -1091,7 +1137,7 @@ function dPlus() {
 
 function dayLevel(d) {
   const total = state.habits.length;
-  if (total === 0) return { level: 0, perfect: false };
+  if (total === 0 || isFuture(d)) return { level: 0, perfect: false };
   let c = 0;
   for (const h of state.habits) if (isChecked(h.id, d)) c++;
   const ratio = c / total;
@@ -1133,6 +1179,7 @@ function renderCalendar() {
   }
   $("cal-month").textContent = `${y}년 ${m + 1}월`;
   $("cal-next").disabled = isCurMonth;
+  $("review-btn-label").textContent = (m + 1) + "월 리뷰 보기";
 
   if (state.checks.size === 0) {
     $("cal-stats").style.display = "none";
@@ -1173,9 +1220,11 @@ function renderCalendar() {
 function countPerfectDays() {
   const total = state.habits.length;
   if (total === 0) return 0;
+  const todayK = key(new Date());
   const byDay = new Map();
   for (const k of state.checks) {
     const ds = k.split("|")[1];
+    if (!ds || ds > todayK) continue;
     byDay.set(ds, (byDay.get(ds) || 0) + 1);
   }
   let n = 0;
@@ -1191,6 +1240,82 @@ $("cal-next").addEventListener("click", () => {
   calAnchor = new Date(calAnchor.getFullYear(), calAnchor.getMonth() + 1, 1);
   renderCalendar();
 });
+
+/* ================= Monthly review ================= */
+function monthBasis(y, m) {
+  const now = new Date();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  return (y === now.getFullYear() && m === now.getMonth()) ? now.getDate() : daysInMonth;
+}
+function monthChecks(y, m) {
+  const prefix = y + "-" + String(m + 1).padStart(2, "0");
+  const todayK = key(new Date());
+  let total = 0;
+  const perHabit = new Map();
+  const daySet = new Set();
+  for (const k of state.checks) {
+    const ds = k.split("|")[1];
+    if (!ds || !ds.startsWith(prefix) || ds > todayK) continue;
+    total++;
+    perHabit.set(k.split("|")[0], (perHabit.get(k.split("|")[0]) || 0) + 1);
+    daySet.add(ds);
+  }
+  return { total, perHabit, daySet };
+}
+function bestStreakInMonth(y, m, daySet) {
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  let best = 0, run = 0;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const ds = y + "-" + String(m + 1).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+    if (daySet.has(ds)) { run++; best = Math.max(best, run); } else run = 0;
+  }
+  return best;
+}
+function openReviewSheet() {
+  const y = calAnchor.getFullYear(), m = calAnchor.getMonth();
+  $("review-title").textContent = (m + 1) + "월 리뷰";
+  const body = $("review-body");
+  const basis = monthBasis(y, m);
+  const { total, perHabit, daySet } = monthChecks(y, m);
+  const th = themeFor(y, m);
+
+  if (state.habits.length === 0) {
+    body.innerHTML = `<div class="review-empty">이 달에는 습관이 없었어요.<br>습관을 만들면 다음 달엔 리뷰를 볼 수 있어요.</div>`;
+  } else if (total === 0) {
+    body.innerHTML = `
+      ${th ? `<div class="review-theme"><div class="t">🎯 ${esc(th.title)}</div>${th.vow ? `<div class="v">${esc(th.vow)}</div>` : ""}</div>` : `<div class="review-theme none">이 달은 테마 없이 흘러갔어요</div>`}
+      <div class="review-empty">이 달에는 기록이 없어요.<br>괜찮아요, 오늘부터 다시 시작하면 돼요.</div>`;
+  } else {
+    const perfect = monthPerfect(y, m);
+    const rate = Math.round(perfect / basis * 100);
+    const streakBest = bestStreakInMonth(y, m, daySet);
+    const rows = state.habits.map((h) => {
+      const c = perHabit.get(h.id) || 0;
+      return { h, c, pct: Math.min(100, Math.round(c / basis * 100)) };
+    }).sort((a, b) => b.c - a.c);
+    const verdict = rate >= 80 ? "이 달의 갓생, 정말 대단해요! 🏆"
+      : rate >= 50 ? "좋은 흐름이에요! 이대로 가세요 💪"
+      : rate >= 20 ? "시작이 반이에요. 다음 달은 더 위로!"
+      : "괜찮아요, 기록이 답이에요. 오늘부터 다시!";
+    body.innerHTML = `
+      <div class="review-hero">
+        <div class="big">${perfect}<small> / ${basis}일</small></div>
+        <div class="cap">완벽한 갓생 달성률 <b style="color:var(--brand)">${rate}%</b></div>
+      </div>
+      ${th ? `<div class="review-theme"><div class="t">🎯 ${esc(th.title)}</div>${th.vow ? `<div class="v">${esc(th.vow)}</div>` : ""}</div>` : `<div class="review-theme none">이 달은 테마 없이 흘러갔어요</div>`}
+      ${rows.map((r) => `
+        <div class="review-row">
+          <span class="em">${r.h.symbol}</span>
+          <span class="nm">${esc(r.h.name)}</span>
+          <span class="bar"><i style="width:${r.pct}%"></i></span>
+          <span class="pc">${r.c}회</span>
+        </div>`).join("")}
+      <div class="review-verdict">${verdict}${streakBest >= 2 ? `<br><span style="font-size:12px;color:var(--label2)">최고 연속 🔥 ${streakBest}일</span>` : ""}</div>`;
+  }
+  showSheet($("review-sheet"));
+}
+$("review-btn").addEventListener("click", openReviewSheet);
+$("review-close").addEventListener("click", hideSheets);
 
 /* ================= Sheet drag-to-dismiss ================= */
 document.querySelectorAll(".sheet").forEach((sheet) => {
