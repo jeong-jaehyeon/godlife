@@ -72,7 +72,8 @@
   .header .sub { font-size: 13px; color: var(--label2); margin-top: 2px; }
   .header-right { display: flex; align-items: center; gap: 10px; }
   .gearbtn {
-    width: 34px; height: 34px; border-radius: 50%; background: var(--card);
+    width: 44px; height: 44px; border-radius: 50%; background: var(--card);
+    border: 5px solid transparent; background-clip: padding-box;
     display: flex; align-items: center; justify-content: center;
     box-shadow: var(--shadow); transition: transform 0.12s;
   }
@@ -87,7 +88,8 @@
   /* ---------- Week nav ---------- */
   .weeknav { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
   .navbtn {
-    width: 34px; height: 34px; border-radius: 50%; background: var(--card);
+    width: 44px; height: 44px; border-radius: 50%; background: var(--card);
+    border: 5px solid transparent; background-clip: padding-box;
     display: flex; align-items: center; justify-content: center;
     font-size: 14px; font-weight: 700; color: var(--label);
     box-shadow: var(--shadow); transition: transform 0.12s, opacity 0.2s;
@@ -97,7 +99,7 @@
   .weekrange { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
 
   /* ---------- Weekday header ---------- */
-  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 0 36px; margin-top: 16px; }
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 0 36px; margin-top: 16px; }
   .days .d { text-align: center; font-size: 11px; font-weight: 700; color: var(--label2); }
   .days .d.today { color: var(--label); }
   .days .d .dot { display: block; width: 4px; height: 4px; border-radius: 50%; margin: 3px auto 0; background: transparent; }
@@ -106,10 +108,10 @@
   /* ---------- Cards ---------- */
   #cards { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
   .card {
-    background: var(--card); border-radius: 22px; padding: 16px;
+    background: var(--card); border-radius: 22px; padding: 12px;
     box-shadow: var(--shadow);
   }
-  .card .head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .card .head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 0 4px; }
   .chip {
     width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center; font-size: 15px;
@@ -121,7 +123,7 @@
     border-radius: 999px; background: var(--fill2); color: var(--label2);
   }
   .badge.full { color: #fff; }
-  .row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
   .cell {
     aspect-ratio: 1; border-radius: 50%; position: relative;
     display: flex; align-items: center; justify-content: center;
@@ -131,7 +133,7 @@
   }
   .cell:active { transform: scale(0.85); }
   .cell.on { border-color: transparent; color: #fff; }
-  .cell.future { opacity: 0.45; }
+  .cell.future { opacity: 0.45; pointer-events: none; }
   .cell.today-ring::after {
     content: ""; position: absolute; inset: 2.5px; border-radius: 50%;
     border: 1.5px solid var(--cell-color, var(--brand)); opacity: 0.55;
@@ -205,6 +207,8 @@
     transition: transform 0.12s;
   }
   .emo:active { transform: scale(0.85); }
+  .emo.custom { background: transparent; border: 1.8px dashed var(--label3); font-size: 17px; }
+  .emo.custom.picked { border-color: var(--brand); border-style: solid; background: rgba(107, 76, 245, 0.18); }
   .sheet .actions { display: flex; gap: 10px; margin-top: 22px; }
   .btn {
     flex: 1; height: 50px; border-radius: 16px; font-size: 16px; font-weight: 600;
@@ -228,7 +232,7 @@
 
   /* ---------- Toast ---------- */
   #toast {
-    position: fixed; left: 50%; bottom: calc(28px + var(--sab)); z-index: 60;
+    position: fixed; left: 50%; bottom: calc(92px + var(--sab)); z-index: 60;
     transform: translate(-50%, 80px); opacity: 0;
     background: rgba(20, 20, 22, 0.88); color: #fff;
     padding: 0 18px; height: 46px; line-height: 46px; border-radius: 999px;
@@ -282,6 +286,11 @@
   .cal-cell.l3 .sq { background: rgba(107, 76, 245, 0.7); }
   .cal-cell.l4 .sq { background: var(--grad); box-shadow: 0 2px 8px rgba(107, 76, 245, 0.4); }
   .cal-legend { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 18px; font-size: 11px; color: var(--label3); }
+  .cal-empty { grid-column: 1 / -1; text-align: center; padding: 48px 20px 24px; }
+  .cal-empty .ico { font-size: 44px; }
+  .cal-empty h2 { font-size: 18px; font-weight: 700; margin-top: 12px; color: var(--label); }
+  .cal-empty p { font-size: 13px; color: var(--label2); margin-top: 6px; line-height: 1.5; }
+  .cal-empty .btn { margin-top: 18px; display: inline-flex; white-space: nowrap; padding: 0 22px; }
   .cal-legend i { width: 14px; height: 14px; border-radius: 5px; background: var(--fill2); display: inline-block; }
   .cal-legend .l1 { background: rgba(107, 76, 245, 0.22); }
   .cal-legend .l2 { background: rgba(107, 76, 245, 0.45); }
@@ -598,7 +607,7 @@ function renderHeader() {
   const p = total === 0 ? 0 : done / total;
   const C = 2 * Math.PI * 24;
   $("ring").style.strokeDashoffset = C * (1 - Math.max(0.02, Math.min(p, 1)));
-  $("ringnum").textContent = Math.round(p * 100);
+  $("ringnum").innerHTML = Math.round(p * 100) + '<span style="font-size:9px;font-weight:600">%</span>';
   const current = key(mondayOf(weekAnchor)) === key(mondayOf(new Date()));
   $("sub").textContent = current ? "이번 주를 채워볼까요?" : "지난 주 돌아보기";
 }
@@ -669,6 +678,7 @@ function esc(s) { return s.replace(/[&<>"']/g, (m) => ({ "&":"&amp;","<":"&lt;",
 
 /* ================= Toggle + toast ================= */
 function handleToggle(habitId, date) {
+  if (isFuture(date)) return;
   vibrate(10);
   toggle(habitId, date);
   const nowDone = allDoneToday();
@@ -713,12 +723,35 @@ function openHabitSheet(habitId, seedName) {
   if (!habit && !seedName) setTimeout(() => $("hs-name").focus(), 320);
 }
 
+function firstEmoji(s) {
+  s = (s || "").trim();
+  if (!s) return "";
+  try {
+    const seg = new Intl.Segmenter("ko", { granularity: "grapheme" });
+    return [...seg.segment(s)][0].segment;
+  } catch (e) { return Array.from(s)[0] || ""; }
+}
+
 function renderEmojiGrid() {
-  $("hs-emos").innerHTML = EMOJIS.map((e) =>
-    `<button class="emo" data-e="${e}" style="${e === sheetEmoji ? "background:rgba(107,76,245,0.18);outline:2px solid var(--brand)" : ""}">${e}</button>`
-  ).join("");
+  const isCustom = !EMOJIS.includes(sheetEmoji);
+  const customTile = isCustom ? sheetEmoji : "";
+  $("hs-emos").innerHTML =
+    `<button class="emo custom ${isCustom ? "picked" : ""}" data-custom="1" aria-label="직접 입력">${customTile || "+"}</button>` +
+    EMOJIS.map((e) =>
+      `<button class="emo" data-e="${e}" style="${e === sheetEmoji ? "background:rgba(107,76,245,0.18);outline:2px solid var(--brand)" : ""}">${e}</button>`
+    ).join("");
   $("hs-emos").querySelectorAll(".emo").forEach((b) =>
-    b.addEventListener("click", () => { sheetEmoji = b.dataset.e; renderEmojiGrid(); renderPreview(); })
+    b.addEventListener("click", () => {
+      if (b.dataset.custom) {
+        const got = firstEmoji(prompt("사용할 이모지를 입력하세요", isCustom ? sheetEmoji : ""));
+        if (!got) return;
+        sheetEmoji = got;
+      } else {
+        sheetEmoji = b.dataset.e;
+      }
+      renderEmojiGrid();
+      renderPreview();
+    })
   );
 }
 
@@ -890,6 +923,24 @@ function renderCalendar() {
   $("cal-month").textContent = `${y}년 ${m + 1}월`;
   const now = new Date();
   $("cal-next").disabled = y === now.getFullYear() && m === now.getMonth();
+
+  if (state.checks.size === 0) {
+    $("cal-stats").style.display = "none";
+    $("cal-dow").style.display = "none";
+    document.querySelector(".cal-legend").style.display = "none";
+    $("cal-grid").innerHTML = `
+      <div class="cal-empty">
+        <div class="ico">🌱</div>
+        <h2>아직 기록이 없어요</h2>
+        <p>홈에서 오늘의 갓생을 채우면<br>이곳에 잔디가 자라나요</p>
+        <button class="btn primary" id="cal-gohome">홈에서 시작하기</button>
+      </div>`;
+    $("cal-gohome").addEventListener("click", () => switchTab("home"));
+    return;
+  }
+  $("cal-stats").style.display = "";
+  $("cal-dow").style.display = "";
+  document.querySelector(".cal-legend").style.display = "";
 
   $("cal-dow").innerHTML = DAY_SYMS.map((s) => `<span>${s}</span>`).join("");
 
