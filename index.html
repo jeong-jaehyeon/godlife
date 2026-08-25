@@ -151,6 +151,10 @@
   }
   .cell:active { transform: scale(0.85); }
   .cell.on { border-color: transparent; color: #fff; }
+  .cell.off {
+    background: var(--fill); border-color: transparent;
+    color: var(--label2); font-size: 12px;
+  }
   .cell.future { opacity: 0.45; pointer-events: none; }
   .cell.today-ring::after {
     content: ""; position: absolute; inset: 2.5px; border-radius: 50%;
@@ -407,7 +411,7 @@
       <div><div class="ob-title">탭 한 번으로
 완료 표시</div>
       <p class="ob-sub" style="margin-top:12px">요일 칸을 탭으면 동그라미가 채워져요
-실수로 눌렀다면 한 번 더 탭으면 돼요</p></div>
+탭: ✓ 했어요 → 한 번 더: ✗ 안 했어요 → 또 탭으면 지워져요</p></div>
       <div class="ob-mini" id="ob-mini"></div>
     </div>
     <div class="ob-page">
@@ -590,18 +594,19 @@ function load() {
       return {
         habits: Array.isArray(s.habits) ? s.habits : [],
         checks: new Set(Array.isArray(s.checks) ? s.checks : []),
+        skips: new Set(Array.isArray(s.skips) ? s.skips : []),
         onboarded: !!s.onboarded,
         name: typeof s.name === "string" ? s.name : "",
         themes: Array.isArray(s.themes) ? s.themes.filter((t) => t && typeof t.month === "string" && typeof t.title === "string").map((t) => ({ month: t.month, title: String(t.title).slice(0, 30), vow: typeof t.vow === "string" ? String(t.vow).slice(0, 60) : "" })) : []
       };
     }
   } catch (e) { console.warn("load failed", e); }
-  return { habits: [], checks: new Set(), onboarded: false, name: "", themes: [] };
+  return { habits: [], checks: new Set(), skips: new Set(), onboarded: false, name: "", themes: [] };
 }
 function save() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      habits: state.habits, checks: [...state.checks], onboarded: state.onboarded, name: state.name, themes: state.themes
+      habits: state.habits, checks: [...state.checks], skips: [...state.skips], onboarded: state.onboarded, name: state.name, themes: state.themes
     }));
   } catch (e) { console.warn("save failed", e); }
 }
@@ -632,10 +637,18 @@ function fmtRange(days) {
 /* ================= Store ops ================= */
 function toggle(habitId, date) {
   const k = habitId + "|" + key(date);
-  state.checks.has(k) ? state.checks.delete(k) : state.checks.add(k);
+  if (state.checks.has(k)) { state.checks.delete(k); state.skips.add(k); }
+  else if (state.skips.has(k)) { state.skips.delete(k); }
+  else { state.checks.add(k); }
   save();
 }
 function isChecked(habitId, date) { return state.checks.has(habitId + "|" + key(date)); }
+function cellState(habitId, date) {
+  const k = habitId + "|" + key(date);
+  if (state.checks.has(k)) return "on";
+  if (state.skips.has(k)) return "off";
+  return "";
+}
 function allDoneToday() {
   const t = key(new Date());
   return state.habits.length > 0 && state.habits.every((h) => state.checks.has(h.id + "|" + t));
@@ -769,11 +782,13 @@ function renderCards() {
     const c = colorOf(h);
     let count = 0;
     const cells = days.map((d, i) => {
-      const on = isChecked(h.id, d);
+      const st = cellState(h.id, d);
+      const on = st === "on";
       if (on) count++;
-      const cls = ["cell", on ? "on" : "", key(d) === todayK ? "today-ring" : "", isFuture(d) && !on ? "future" : ""].join(" ").trim();
+      const cls = ["cell", st, key(d) === todayK ? "today-ring" : "", isFuture(d) && !st ? "future" : ""].join(" ").trim();
       const style = on ? `background:${c};--cell-color:${c}` : `--cell-color:${c}`;
-      return `<button class="${cls}" style="${style}" data-h="${h.id}" data-i="${i}" aria-label="${DAY_SYMS[i]} 완료 ${on ? "됨" : "안 됨"}"><span class="check">✓</span></button>`;
+      const aria = st === "on" ? "했어요" : st === "off" ? "안 했어요" : "기록 없음";
+      return `<button class="${cls}" style="${style}" data-h="${h.id}" data-i="${i}" aria-label="${DAY_SYMS[i]} ${aria}"><span class="check">${on ? "✓" : "✗"}</span></button>`;
     }).join("");
     return `
       <div class="card" data-edit="${h.id}">
@@ -925,6 +940,7 @@ function deleteHabit() {
   state.habits = state.habits.filter((x) => x.id !== editingId);
   const prefix = editingId + "|";
   state.checks = new Set([...state.checks].filter((k) => !k.startsWith(prefix)));
+  state.skips = new Set([...state.skips].filter((k) => !k.startsWith(prefix)));
   save();
   hideSheets();
   renderAll();
@@ -933,8 +949,8 @@ function deleteHabit() {
 /* ================= Settings: backup ================= */
 function doExport() {
   const data = {
-    app: "godlife", version: 1, exportedAt: new Date().toISOString(),
-    name: state.name, habits: state.habits, checks: [...state.checks]
+    app: "godlife", version: 2, exportedAt: new Date().toISOString(),
+    name: state.name, habits: state.habits, checks: [...state.checks], skips: [...state.skips], themes: state.themes
   };
   const d = new Date();
   const filename = `godlife-backup-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`;
@@ -980,6 +996,7 @@ function doImport(file) {
         createdAt: h.createdAt || Date.now()
       }));
       state.checks = new Set(data.checks.filter((k) => typeof k === "string"));
+      state.skips = new Set(Array.isArray(data.skips) ? data.skips.filter((k) => typeof k === "string") : []);
       state.name = typeof data.name === "string" ? data.name.slice(0, 12) : "";
       state.themes = Array.isArray(data.themes) ? data.themes.filter((t) => t && typeof t.month === "string" && typeof t.title === "string").map((t) => ({ month: t.month, title: String(t.title).slice(0, 30), vow: typeof t.vow === "string" ? String(t.vow).slice(0, 60) : "" })) : [];
       save();
