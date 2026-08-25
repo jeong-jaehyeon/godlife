@@ -152,7 +152,8 @@
   .empty p { font-size: 12px; color: var(--label2); margin-top: 4px; }
   .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
   .sugg {
-    font-size: 12px; font-weight: 500; padding: 0 12px; min-height: 36px;
+    height: 36px; line-height: 36px;
+    font-size: 12px; font-weight: 500; padding: 0 12px;
     background: var(--fill2); border-radius: 999px; color: var(--label);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     transition: transform 0.12s;
@@ -186,6 +187,7 @@
   .sheet .grab::after { content: ""; width: 36px; height: 5px; border-radius: 3px; background: var(--fill); }
   .sheet h3 { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 18px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
   .sheet .lbl { font-size: 12px; font-weight: 600; color: var(--label2); margin: 16px 0 8px; }
+  .sheet .lbl .hint { font-weight: 500; color: var(--label3); margin-left: 6px; }
   .sheet input[type=text] {
     width: 100%; height: 48px; border: none; outline: none;
     background: var(--fill2); border-radius: 14px; padding: 0 14px;
@@ -212,6 +214,7 @@
   .sheet .actions { display: flex; gap: 10px; margin-top: 22px; }
   .btn {
     flex: 1; height: 50px; border-radius: 16px; font-size: 16px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
     transition: transform 0.12s, opacity 0.2s;
   }
   .btn:active { transform: scale(0.97); }
@@ -290,7 +293,7 @@
   .cal-empty .ico { font-size: 44px; }
   .cal-empty h2 { font-size: 18px; font-weight: 700; margin-top: 12px; color: var(--label); }
   .cal-empty p { font-size: 13px; color: var(--label2); margin-top: 6px; line-height: 1.5; }
-  .cal-empty .btn { margin-top: 18px; display: inline-flex; white-space: nowrap; padding: 0 22px; }
+  .cal-empty .btn { margin-top: 18px; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; padding: 0 22px; }
   .cal-legend i { width: 14px; height: 14px; border-radius: 5px; background: var(--fill2); display: inline-block; }
   .cal-legend .l1 { background: rgba(107, 76, 245, 0.22); }
   .cal-legend .l2 { background: rgba(107, 76, 245, 0.45); }
@@ -333,7 +336,9 @@
   .ob-dots i.on { width: 22px; background: var(--label); }
   #ob-next {
     margin: 0 24px; height: 56px; border-radius: 999px; background: var(--grad);
-    color: #fff; font-size: 17px; font-weight: 700; transition: transform 0.12s, opacity 0.2s;
+    color: #fff; font-size: 17px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.12s, opacity 0.2s;
   }
   #ob-next:active { transform: scale(0.97); }
   #ob-next[disabled] { opacity: 0.35; pointer-events: none; }
@@ -480,7 +485,7 @@
   <div class="lbl">아이콘</div>
   <div class="emogrid" id="hs-emos"></div>
   <div id="hs-sugg-wrap">
-    <div class="lbl">추천 갓생 습관</div>
+    <div class="lbl">추천 갓생 습관 <span class="hint">탭하면 이름·아이콘이 채워져요</span></div>
     <div class="chips" id="hs-sugg"></div>
   </div>
   <div class="actions">
@@ -636,7 +641,7 @@ function renderCards() {
       <div class="empty">
         <div class="plus">＋</div>
         <h2>첫 갓생 습관을 만들어보세요</h2>
-        <p>탭 한 번으로 매주 체크하는 나만의 루틴</p>
+        <p>탭 한 번으로 매주 체크하는 나만의 루틴<br><span style="font-size:12px;color:var(--label3)">아래 추천을 탭하면 이름이 채워져요</span></p>
         <div class="chips">${SUGGESTIONS.map(([n], i) => `<button class="sugg" data-i="${i}">${n}</button>`).join("")}</div>
       </div>`;
     wrap.querySelectorAll(".sugg").forEach((b) =>
@@ -708,6 +713,20 @@ function hideSheets() {
   document.querySelectorAll(".sheet").forEach((s) => s.classList.remove("show"));
 }
 
+function renderSheetSugg() {
+  $("hs-sugg").innerHTML = SUGGESTIONS.map(([n], i) => `<button class="sugg" data-i="${i}">${n}</button>`).join("");
+  $("hs-sugg").querySelectorAll(".sugg").forEach((b) =>
+    b.addEventListener("click", () => {
+      const [n, e] = SUGGESTIONS[+b.dataset.i];
+      $("hs-name").value = n;
+      sheetEmoji = e;
+      $("hs-name").dispatchEvent(new Event("input"));
+      renderEmojiGrid();
+      renderPreview();
+    })
+  );
+}
+
 function openHabitSheet(habitId, seedName) {
   editingId = habitId;
   const habit = habitId ? state.habits.find((h) => h.id === habitId) : null;
@@ -717,6 +736,7 @@ function openHabitSheet(habitId, seedName) {
   $("hs-sugg-wrap").style.display = habit ? "none" : "block";
   $("hs-name").value = habit ? habit.name : (seedName || "");
   sheetEmoji = habit ? habit.symbol : (SUGGESTIONS.find(([n]) => n === seedName)?.[1] || "⭐");
+  if (!habit) renderSheetSugg();
   renderEmojiGrid();
   renderPreview();
   showSheet($("habit-sheet"));
@@ -1019,9 +1039,11 @@ document.querySelectorAll(".sheet").forEach((sheet) => {
 /* ================= Onboarding ================= */
 const obPages = $("ob-pages");
 const OB_LAST = 3;
-function obPage() { return Math.round(obPages.scrollLeft / obPages.clientWidth); }
+let obCur = 0;
+function obPage() { return Math.max(0, Math.min(OB_LAST, Math.round(obPages.scrollLeft / Math.max(1, obPages.clientWidth)))); }
 function obUpdate() {
   const p = obPage();
+  obCur = p;
   [...$("ob-dots").children].forEach((d, i) => d.classList.toggle("on", i === p));
   const name = $("ob-name").value.trim();
   if (p === OB_LAST) {
@@ -1033,6 +1055,13 @@ function obUpdate() {
   }
 }
 obPages.addEventListener("scroll", () => requestAnimationFrame(obUpdate), { passive: true });
+function obResync() {
+  if (!obPages.clientWidth) return;
+  obPages.scrollTo({ left: obCur * obPages.clientWidth });
+  requestAnimationFrame(obUpdate);
+}
+window.addEventListener("resize", obResync);
+window.addEventListener("orientationchange", () => setTimeout(obResync, 250));
 $("ob-name").addEventListener("input", obUpdate);
 $("ob-name").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
 $("ob-next").addEventListener("click", () => {
