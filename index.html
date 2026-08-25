@@ -85,6 +85,24 @@
   .ring-bar { fill: none; stroke: url(#ringGrad); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.45s cubic-bezier(0.25, 0.8, 0.35, 1); }
   .ring-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
+  /* ---------- Theme banner ---------- */
+  .theme-banner {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+    margin-top: 14px; padding: 13px 16px; border-radius: 18px;
+    background: linear-gradient(135deg, rgba(107, 76, 245, 0.1), rgba(166, 112, 255, 0.14));
+    transition: transform 0.12s;
+  }
+  .theme-banner:active { transform: scale(0.98); }
+  .theme-banner.empty {
+    background: transparent; border: 1.6px dashed var(--label3); padding: 12px 16px;
+  }
+  .theme-banner .t-ico { font-size: 22px; flex-shrink: 0; }
+  .theme-banner .t-main { flex: 1; min-width: 0; }
+  .theme-banner .t-title { font-size: 14px; font-weight: 700; color: var(--label); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .theme-banner .t-vow { font-size: 12px; color: var(--label2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .theme-banner .t-prog { font-size: 11px; font-weight: 600; color: var(--brand); background: rgba(107, 76, 245, 0.12); border-radius: 999px; padding: 4px 10px; flex-shrink: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .theme-banner.empty .t-title { color: var(--label2); font-weight: 600; }
+
   /* ---------- Week nav ---------- */
   .weeknav { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
   .navbtn {
@@ -271,6 +289,14 @@
   .cal-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; padding-top: 6px; }
   .cal-stats { font-size: 13px; color: var(--label2); margin-top: 4px; }
   .cal-stats b { color: var(--brand); font-weight: 700; }
+  .cal-theme {
+    margin-top: 12px; padding: 10px 14px; border-radius: 14px; font-size: 13px;
+    background: linear-gradient(135deg, rgba(107, 76, 245, 0.08), rgba(166, 112, 255, 0.12));
+    color: var(--label); text-align: center;
+  }
+  .cal-theme b { color: var(--brand); font-weight: 700; }
+  .cal-theme .vow { color: var(--label2); font-size: 12px; margin-left: 6px; }
+  .cal-theme.link { border: 1.6px dashed var(--label3); background: transparent; color: var(--label2); cursor: pointer; width: 100%; }
   .cal-head { display: flex; align-items: center; justify-content: space-between; margin: 20px 0 8px; }
   .cal-month { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .cal-nav { display: flex; gap: 8px; }
@@ -400,8 +426,17 @@
       <input class="ob-name" id="ob-name" placeholder="예: 정재현" maxlength="12" autocomplete="off" enterkeyhint="done"></div>
       <div style="height:62px"></div>
     </div>
+    <div class="ob-page">
+      <div class="ob-icon" style="background:linear-gradient(135deg,#F59447,#FFC46B);box-shadow:0 12px 24px rgba(245,148,71,0.3)">🎯</div>
+      <div><div class="ob-title">이번 달의 테마는?</div>
+      <p class="ob-sub" style="margin-top:12px">한 달의 컨셉을 정해두면
+갓생이 훨씬 꾸준해져요</p>
+      <input class="ob-name ob-theme-in" id="ob-theme" placeholder="예: 킥복싱 도전의 달" maxlength="30" autocomplete="off" enterkeyhint="done">
+      <input class="ob-name ob-theme-in" id="ob-vow" placeholder="한 줄 다짐 (선택)" maxlength="60" autocomplete="off" enterkeyhint="done"></div>
+      <div style="height:62px"></div>
+    </div>
   </div>
-  <div class="ob-dots" id="ob-dots"><i class="on"></i><i></i><i></i><i></i></div>
+  <div class="ob-dots" id="ob-dots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
   <button id="ob-next">다음</button>
 </div>
 
@@ -428,6 +463,8 @@
     </div>
   </div>
 
+  <button class="theme-banner" id="theme-banner"></button>
+
   <div class="weeknav">
     <button class="navbtn" id="prevweek" aria-label="지난주">‹</button>
     <div class="weekrange" id="weekrange"></div>
@@ -443,6 +480,7 @@
 <div id="calapp">
   <div class="cal-title" id="cal-title">갓생 캘린더</div>
   <div class="cal-stats" id="cal-stats"></div>
+  <div class="cal-theme" id="cal-theme" style="display:none"></div>
   <div class="cal-head">
     <div class="cal-nav">
       <button class="navbtn" id="cal-prev" aria-label="이전 달">‹</button>
@@ -495,10 +533,25 @@
   <button class="btn danger" id="hs-delete" style="display:none">습관 삭제</button>
 </div>
 
+<div class="sheet" id="theme-sheet">
+  <div class="grab"></div>
+  <h3 id="th-title-label">이번 달 테마</h3>
+  <div class="lbl">테마 <span class="hint" id="th-month"></span></div>
+  <input type="text" id="th-title" placeholder="예: 킥복싱 도전의 달" maxlength="30" enterkeyhint="done" autocomplete="off">
+  <div class="lbl">한 줄 다짐 <span class="hint">선택</span></div>
+  <input type="text" id="th-vow" placeholder="예: 이번엔 3개월은 해보기" maxlength="60" enterkeyhint="done" autocomplete="off">
+  <div class="actions">
+    <button class="btn ghost" id="th-cancel">취소</button>
+    <button class="btn primary" id="th-save">저장</button>
+  </div>
+  <button class="btn danger" id="th-delete" style="display:none">테마 지우기</button>
+</div>
+
 <div class="sheet" id="settings-sheet">
   <div class="grab"></div>
   <h3>설정</h3>
   <div class="setrow"><span>이름</span><button class="setbtn" id="editname">편집</button></div>
+  <div class="setrow"><span>이번 달 테마</span><button class="setbtn" id="edittheme">편집</button></div>
   <div class="setrow"><span>기록 내보내기</span><button class="setbtn" id="exp">백업 파일 받기</button></div>
   <div class="setrow"><span>기록 가져오기</span><button class="setbtn" id="imp">파일 선택</button></div>
   <div class="setrow"><span>습관</span><span class="val" id="stat-habits">0개</span></div>
@@ -538,22 +591,25 @@ function load() {
         habits: Array.isArray(s.habits) ? s.habits : [],
         checks: new Set(Array.isArray(s.checks) ? s.checks : []),
         onboarded: !!s.onboarded,
-        name: typeof s.name === "string" ? s.name : ""
+        name: typeof s.name === "string" ? s.name : "",
+        themes: Array.isArray(s.themes) ? s.themes.filter((t) => t && typeof t.month === "string" && typeof t.title === "string").map((t) => ({ month: t.month, title: String(t.title).slice(0, 30), vow: typeof t.vow === "string" ? String(t.vow).slice(0, 60) : "" })) : []
       };
     }
   } catch (e) { console.warn("load failed", e); }
-  return { habits: [], checks: new Set(), onboarded: false, name: "" };
+  return { habits: [], checks: new Set(), onboarded: false, name: "", themes: [] };
 }
 function save() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      habits: state.habits, checks: [...state.checks], onboarded: state.onboarded, name: state.name
+      habits: state.habits, checks: [...state.checks], onboarded: state.onboarded, name: state.name, themes: state.themes
     }));
   } catch (e) { console.warn("save failed", e); }
 }
 
 /* ================= Date logic ================= */
 function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function monthKey(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
+function themeFor(y, m) { const k = y + "-" + String(m + 1).padStart(2, "0"); return state.themes.find((t) => t.month === k) || null; }
 function key(d) {
   const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,"0"), dd = String(d.getDate()).padStart(2,"0");
   return `${y}-${m}-${dd}`;
@@ -595,9 +651,67 @@ const $ = (id) => document.getElementById(id);
 
 function renderAll() {
   renderHeader();
+  renderBanner();
   renderDays();
   renderCards();
   renderNav();
+}
+
+/* ================= Monthly theme ================= */
+function monthPerfect(y, m) {
+  const total = state.habits.length;
+  if (total === 0) return 0;
+  const prefix = y + "-" + String(m + 1).padStart(2, "0");
+  const byDay = new Map();
+  for (const k of state.checks) {
+    const ds = k.split("|")[1];
+    if (ds && ds.startsWith(prefix)) byDay.set(ds, (byDay.get(ds) || 0) + 1);
+  }
+  let n = 0;
+  for (const c of byDay.values()) if (c >= total) n++;
+  return n;
+}
+function daysLeftThisMonth() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
+}
+function renderBanner() {
+  const b = $("theme-banner");
+  const th = themeFor(new Date().getFullYear(), new Date().getMonth());
+  if (th) {
+    b.classList.remove("empty");
+    b.innerHTML = `<span class="t-ico">🎯</span>
+      <span class="t-main"><span class="t-title">${esc(th.title)}</span>${th.vow ? `<span class="t-vow">${esc(th.vow)}</span>` : ""}</span>
+      <span class="t-prog">완벽한 날 ${monthPerfect(new Date().getFullYear(), new Date().getMonth())}일 · D-${daysLeftThisMonth()}</span>`;
+  } else {
+    b.classList.add("empty");
+    b.innerHTML = `<span class="t-ico">🎯</span><span class="t-main"><span class="t-title">이번 달 테마 정하기</span><span class="t-vow">탭해서 이번 달의 갓생 컨셉을 새워보세요</span></span>`;
+  }
+}
+function openThemeSheet() {
+  const now = new Date();
+  $("th-month").textContent = (now.getMonth() + 1) + "월";
+  const th = themeFor(now.getFullYear(), now.getMonth());
+  $("th-title").value = th ? th.title : "";
+  $("th-vow").value = th ? th.vow : "";
+  $("th-delete").style.display = th ? "block" : "none";
+  thUpdate();
+  showSheet($("theme-sheet"));
+}
+function thUpdate() { $("th-save").disabled = !$("th-title").value.trim(); }
+function saveTheme() {
+  const title = $("th-title").value.trim().slice(0, 30);
+  if (!title) return;
+  const now = new Date();
+  const mk = monthKey(now);
+  const ex = state.themes.find((t) => t.month === mk);
+  const th = { month: mk, title, vow: $("th-vow").value.trim().slice(0, 60) };
+  if (ex) Object.assign(ex, th); else state.themes.push(th);
+  save();
+  hideSheets();
+  renderAll();
+  renderCalendar();
+  showToast("🎯 " + title + " 시작!");
 }
 
 function renderHeader() {
@@ -867,6 +981,7 @@ function doImport(file) {
       }));
       state.checks = new Set(data.checks.filter((k) => typeof k === "string"));
       state.name = typeof data.name === "string" ? data.name.slice(0, 12) : "";
+      state.themes = Array.isArray(data.themes) ? data.themes.filter((t) => t && typeof t.month === "string" && typeof t.title === "string").map((t) => ({ month: t.month, title: String(t.title).slice(0, 30), vow: typeof t.vow === "string" ? String(t.vow).slice(0, 60) : "" })) : [];
       save();
       renderAll();
       openSettings();
@@ -879,6 +994,8 @@ function doImport(file) {
 }
 
 function openSettings() {
+  const th = themeFor(new Date().getFullYear(), new Date().getMonth());
+  $("edittheme").textContent = th ? "변경" : "정하기";
   $("editname").textContent = state.name.trim() || "설정";
   $("stat-habits").textContent = state.habits.length + "개";
   $("stat-checks").textContent = state.checks.size + "회";
@@ -940,9 +1057,25 @@ function renderCalendar() {
   $("cal-stats").innerHTML = parts.join(" · ");
 
   const y = calAnchor.getFullYear(), m = calAnchor.getMonth();
-  $("cal-month").textContent = `${y}년 ${m + 1}월`;
   const now = new Date();
-  $("cal-next").disabled = y === now.getFullYear() && m === now.getMonth();
+  const isCurMonth = y === now.getFullYear() && m === now.getMonth();
+  const th = themeFor(y, m);
+  const ct = $("cal-theme");
+  if (th) {
+    ct.style.display = "";
+    ct.classList.remove("link");
+    ct.onclick = null;
+    ct.innerHTML = `🎯 <b>${esc(th.title)}</b>${th.vow ? `<span class="vow">${esc(th.vow)}</span>` : ""}`;
+  } else if (isCurMonth) {
+    ct.style.display = "";
+    ct.classList.add("link");
+    ct.textContent = "+ 이번 달 테마 정하기";
+    ct.onclick = openThemeSheet;
+  } else {
+    ct.style.display = "none";
+  }
+  $("cal-month").textContent = `${y}년 ${m + 1}월`;
+  $("cal-next").disabled = isCurMonth;
 
   if (state.checks.size === 0) {
     $("cal-stats").style.display = "none";
@@ -1038,7 +1171,7 @@ document.querySelectorAll(".sheet").forEach((sheet) => {
 
 /* ================= Onboarding ================= */
 const obPages = $("ob-pages");
-const OB_LAST = 3;
+const OB_LAST = 4;
 let obCur = 0;
 function obPage() { return Math.max(0, Math.min(OB_LAST, Math.round(obPages.scrollLeft / Math.max(1, obPages.clientWidth)))); }
 function obUpdate() {
@@ -1047,6 +1180,10 @@ function obUpdate() {
   [...$("ob-dots").children].forEach((d, i) => d.classList.toggle("on", i === p));
   const name = $("ob-name").value.trim();
   if (p === OB_LAST) {
+    const th = $("ob-theme").value.trim();
+    $("ob-next").textContent = th ? "🎯 " + th + " 시작하기" : "건너뛰고 시작하기";
+    $("ob-next").disabled = false;
+  } else if (p === OB_LAST - 1) {
     $("ob-next").textContent = name ? name + "의 갓생 시작하기" : "이름을 입력해주세요";
     $("ob-next").disabled = !name;
   } else {
@@ -1054,16 +1191,20 @@ function obUpdate() {
     $("ob-next").disabled = false;
   }
 }
-obPages.addEventListener("scroll", () => requestAnimationFrame(obUpdate), { passive: true });
+obPages.addEventListener("scroll", obUpdate, { passive: true });
 function obResync() {
   if (!obPages.clientWidth) return;
   obPages.scrollTo({ left: obCur * obPages.clientWidth });
-  requestAnimationFrame(obUpdate);
+  obUpdate();
 }
 window.addEventListener("resize", obResync);
 window.addEventListener("orientationchange", () => setTimeout(obResync, 250));
 $("ob-name").addEventListener("input", obUpdate);
 $("ob-name").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
+["ob-theme", "ob-vow"].forEach((id) => {
+  $(id).addEventListener("input", obUpdate);
+  $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
+});
 $("ob-next").addEventListener("click", () => {
   const p = obPage();
   if (p < OB_LAST) obPages.scrollTo({ left: (p + 1) * obPages.clientWidth, behavior: "smooth" });
@@ -1072,6 +1213,13 @@ $("ob-next").addEventListener("click", () => {
 $("ob-skip").addEventListener("click", finishOnboarding);
 function finishOnboarding() {
   state.name = $("ob-name").value.trim().slice(0, 12);
+  const thTitle = $("ob-theme").value.trim().slice(0, 30);
+  if (thTitle) {
+    const mk = monthKey(new Date());
+    const ex = state.themes.find((t) => t.month === mk);
+    const th = { month: mk, title: thTitle, vow: $("ob-vow").value.trim().slice(0, 60) };
+    if (ex) Object.assign(ex, th); else state.themes.push(th);
+  }
   state.onboarded = true;
   save();
   renderAll();
@@ -1142,6 +1290,22 @@ $("reset").addEventListener("click", () => {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") hideSheets();
 });
+
+/* Theme banner + sheet */
+$("theme-banner").addEventListener("click", openThemeSheet);
+$("th-cancel").addEventListener("click", hideSheets);
+$("th-save").addEventListener("click", saveTheme);
+$("th-title").addEventListener("input", thUpdate);
+$("th-delete").addEventListener("click", () => {
+  if (!confirm("이번 달 테마를 지울까요?\n지난 달 테마 기록은 남아있어요.")) return;
+  const mk = monthKey(new Date());
+  state.themes = state.themes.filter((t) => t.month !== mk);
+  save();
+  hideSheets();
+  renderAll();
+  renderCalendar();
+});
+$("edittheme").addEventListener("click", () => { hideSheets(); setTimeout(openThemeSheet, 120); });
 
 /* Settings */
 $("gearbtn").addEventListener("click", openSettings);
