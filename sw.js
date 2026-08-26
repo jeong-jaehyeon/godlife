@@ -1,4 +1,4 @@
-const CACHE = "godlife-v11";
+const CACHE = "godlife-v12";
 const ASSETS = [
   "./",
   "./index.html",
