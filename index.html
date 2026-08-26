@@ -163,6 +163,10 @@
   }
   .cell.off .check { opacity: 1; transform: scale(1); }
   .cell.future { opacity: 0.45; pointer-events: none; }
+  .cell.na {
+    border-style: dashed; opacity: 0.35; pointer-events: none;
+    background: transparent;
+  }
   .cell.today-ring::after {
     content: ""; position: absolute; inset: 2.5px; border-radius: 50%;
     border: 1.5px solid var(--cell-color, var(--brand)); opacity: 0.55;
@@ -240,6 +244,16 @@
   .emo:active { transform: scale(0.85); }
   .emo.custom { background: transparent; border: 1.8px dashed var(--label3); font-size: 17px; }
   .emo.custom.picked { border-color: var(--brand); border-style: solid; background: rgba(107, 76, 245, 0.18); }
+  .daypick { display: flex; gap: 6px; }
+  .daypick button {
+    flex: 1; height: 40px; border-radius: 12px; background: var(--fill2);
+    font-size: 13px; font-weight: 700; color: var(--label3); transition: all 0.15s;
+  }
+  .daypick button.on {
+    background: rgba(107, 76, 245, 0.14); color: var(--brand);
+    box-shadow: inset 0 0 0 1.5px var(--brand);
+  }
+  .daypick button:active { transform: scale(0.92); }
   .sheet .actions { display: flex; gap: 10px; margin-top: 22px; }
   .btn {
     flex: 1; height: 50px; border-radius: 16px; font-size: 16px; font-weight: 600;
@@ -374,6 +388,21 @@
   .review-row .pc { font-size: 11px; font-weight: 700; color: var(--label2); width: 34px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
   .review-verdict { text-align: center; font-size: 13px; font-weight: 600; color: var(--label); background: var(--fill2); border-radius: 12px; padding: 11px 14px; margin-top: 16px; }
   .review-empty { text-align: center; padding: 26px 10px 10px; font-size: 13px; color: var(--label2); line-height: 1.6; }
+  .dayrow { display: flex; align-items: center; gap: 10px; padding: 11px 2px; border-bottom: 1px solid var(--sep); font-size: 14px; }
+  .dayrow:last-of-type { border-bottom: none; }
+  .dayrow .st { margin-left: auto; font-size: 12px; font-weight: 700; }
+  .dayrow .st.on { color: var(--brand); }
+  .dayrow .st.off { color: #FF3B30; }
+  .dayrow .st.na { color: var(--label3); font-weight: 500; }
+  .galrow { padding: 12px 2px; border-bottom: 1px solid var(--sep); }
+  .galrow:last-of-type { border-bottom: none; }
+  .galrow .gm { font-size: 11px; font-weight: 700; color: var(--label3); }
+  .galrow .gt { font-size: 14px; font-weight: 700; color: var(--brand); margin-top: 2px; }
+  .galrow .gv { font-size: 12px; color: var(--label2); margin-top: 2px; }
+  .galrow .gp { font-size: 12px; color: var(--label2); margin-top: 4px; }
+  .galrow .gp b { color: var(--label); }
+  .cal-cell { cursor: pointer; }
+  .cal-cell:active { opacity: 0.7; }
 
   /* ---------- Onboarding ---------- */
   #onboarding {
@@ -571,6 +600,8 @@
   </div>
   <div class="lbl">이름</div>
   <input type="text" id="hs-name" placeholder="예: 저녁 9시 이후 금식" maxlength="30" enterkeyhint="done" autocomplete="off">
+  <div class="lbl">반복 요일 <span class="hint">해당 없는 요일은 자동으로 쉬어요</span></div>
+  <div class="daypick" id="hs-days"></div>
   <div class="lbl">아이콘</div>
   <div class="emogrid" id="hs-emos"></div>
   <div id="hs-sugg-wrap">
@@ -581,6 +612,11 @@
     <button class="btn ghost" id="hs-cancel">취소</button>
     <button class="btn primary" id="hs-save">추가</button>
   </div>
+  <div class="actions" id="hs-order-row" style="display:none">
+    <button class="btn ghost" id="hs-up">↑ 위로</button>
+    <button class="btn ghost" id="hs-down">↓ 아래로</button>
+  </div>
+  <button class="btn ghost" id="hs-archive" style="display:none; color:var(--label2)">습관 보관하기</button>
   <button class="btn danger" id="hs-delete" style="display:none">습관 삭제</button>
 </div>
 
@@ -602,8 +638,28 @@
   <div class="grab"></div>
   <h3 id="review-title">월말 리뷰</h3>
   <div id="review-body"></div>
+  <button class="btn ghost" id="gallery-open" style="width:100%;margin-top:12px">📚 지난 테마 모아보기</button>
   <div class="actions">
     <button class="btn ghost" id="review-close">닫기</button>
+  </div>
+</div>
+
+<div class="sheet" id="day-sheet">
+  <div class="grab"></div>
+  <h3 id="day-title">기록</h3>
+  <div id="day-list"></div>
+  <p class="setnote" style="text-align:center">수정은 홈 화면 주간 칸에서 할 수 있어요</p>
+  <div class="actions">
+    <button class="btn ghost" id="day-close">닫기</button>
+  </div>
+</div>
+
+<div class="sheet" id="gallery-sheet">
+  <div class="grab"></div>
+  <h3>지난 테마</h3>
+  <div id="gallery-list"></div>
+  <div class="actions">
+    <button class="btn ghost" id="gallery-close">닫기</button>
   </div>
 </div>
 
@@ -617,6 +673,10 @@
   <div class="setrow"><span>습관</span><span class="val" id="stat-habits">0개</span></div>
   <div class="setrow"><span>전체 체크 수</span><span class="val" id="stat-checks">0회</span></div>
   <div class="setrow"><span>데이터 초기화</span><button class="setbtn" id="reset" style="color:#FF3B30">전체 삭제</button></div>
+  <div id="archived-wrap" style="display:none">
+    <div class="lbl" style="margin-top:16px">보관한 습관</div>
+    <div id="archived-list"></div>
+  </div>
   <p class="setnote">기록은 이 기기에만 저장돼요. 기기를 바꾸거나 앱을 지우기 전엔 백업을 꼭 해두세요.</p>
   <input type="file" id="imp-file" accept="application/json,.json" style="display:none">
 </div>
@@ -641,15 +701,24 @@ let weekAnchor = startOfDay(new Date());
 let wasAllDoneToday = false;
 let editingId = null;
 let sheetEmoji = "⭐";
+let sheetDays = [0, 1, 2, 3, 4, 5, 6];
 let toastTimer = null;
 
+function sanitizeDays(days) {
+  const arr = Array.isArray(days) ? days.filter((n) => Number.isInteger(n) && n >= 0 && n < 7) : [];
+  return arr.length ? [...new Set(arr)].sort((a, b) => a - b) : [0, 1, 2, 3, 4, 5, 6];
+}
 function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) {
       const s = JSON.parse(raw);
       return {
-        habits: Array.isArray(s.habits) ? s.habits : [],
+        habits: Array.isArray(s.habits) ? s.habits.map((h) => ({
+          ...h,
+          days: sanitizeDays(h.days),
+          archived: !!h.archived
+        })) : [],
         checks: new Set(Array.isArray(s.checks) ? s.checks : []),
         skips: new Set(Array.isArray(s.skips) ? s.skips : []),
         onboarded: !!s.onboarded,
@@ -706,12 +775,16 @@ function cellState(habitId, date) {
   if (state.skips.has(k)) return "off";
   return "";
 }
+function activeHabits() { return state.habits.filter((h) => !h.archived); }
+function applicableOn(h, date) { return h.days.includes((date.getDay() + 6) % 7); }
 function allDoneToday() {
-  const t = key(new Date());
-  return state.habits.length > 0 && state.habits.every((h) => state.checks.has(h.id + "|" + t));
+  const t = new Date();
+  const k = key(t);
+  const list = activeHabits().filter((h) => applicableOn(h, t));
+  return list.length > 0 && list.every((h) => state.checks.has(h.id + "|" + k));
 }
-function addHabit(name, emoji) {
-  state.habits.push({ id: uid(), name, symbol: emoji, color: state.habits.length % PALETTE.length, createdAt: Date.now() });
+function addHabit(name, emoji, days) {
+  state.habits.push({ id: uid(), name, symbol: emoji, color: state.habits.length % PALETTE.length, createdAt: Date.now(), days: sanitizeDays(days), archived: false });
   save();
 }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
@@ -807,8 +880,8 @@ function renderHeader() {
   title.classList.toggle("named", named);
   const days = weekDays(weekAnchor);
   let done = 0, decided = 0;
-  for (const h of state.habits) for (const d of days) {
-    if (isFuture(d)) continue;
+  for (const h of activeHabits()) for (const d of days) {
+    if (isFuture(d) || !applicableOn(h, d)) continue;
     const k = h.id + "|" + key(d);
     if (state.checks.has(k)) { done++; decided++; }
     else if (state.skips.has(k)) decided++;
@@ -843,7 +916,8 @@ function colorOf(h) { return PALETTE[((h.color % 6) + 6) % 6]; }
 
 function renderCards() {
   const wrap = $("cards");
-  if (state.habits.length === 0) {
+  const list = activeHabits();
+  if (list.length === 0) {
     wrap.innerHTML = `
       <div class="empty">
         <div class="plus">＋</div>
@@ -858,17 +932,19 @@ function renderCards() {
   }
   const days = weekDays(weekAnchor);
   const todayK = key(new Date());
-  wrap.innerHTML = state.habits.map((h) => {
+  wrap.innerHTML = list.map((h) => {
     const c = colorOf(h);
-    let count = 0;
+    let count = 0, goal = 0;
     const cells = days.map((d, i) => {
-      const st = cellState(h.id, d);
+      const na = !applicableOn(h, d);
+      const st = na ? "" : cellState(h.id, d);
       const on = st === "on";
+      if (!na && !isFuture(d)) goal++;
       if (on) count++;
-      const cls = ["cell", st, key(d) === todayK ? "today-ring" : "", isFuture(d) && !st ? "future" : ""].join(" ").trim();
+      const cls = ["cell", na ? "na" : st, !na && key(d) === todayK ? "today-ring" : "", !na && isFuture(d) && !st ? "future" : ""].join(" ").trim();
       const style = on ? `background:${c};--cell-color:${c}` : `--cell-color:${c}`;
-      const aria = st === "on" ? "했어요" : st === "off" ? "안 했어요" : "기록 없음";
-      return `<button class="${cls}" style="${style}" data-h="${h.id}" data-i="${i}" aria-label="${DAY_SYMS[i]} ${aria}"><span class="check">${on ? "✓" : "✗"}</span></button>`;
+      const aria = na ? "쉬는 날" : st === "on" ? "했어요" : st === "off" ? "안 했어요" : "기록 없음";
+      return `<button class="${cls}" style="${style}" data-h="${h.id}" data-i="${i}" aria-label="${DAY_SYMS[i]} ${aria}"><span class="check">${on ? "✓" : na ? "" : "✗"}</span></button>`;
     }).join("");
     return `
       <div class="card">
@@ -876,7 +952,7 @@ function renderCards() {
           <div class="chip" style="background:${c}22">${h.symbol}</div>
           <div class="name">${esc(h.name)}</div>
           <button class="editbtn" data-edit="${h.id}" aria-label="${esc(h.name)} 편집">✏️</button>
-          <div class="badge ${count === 7 ? "full" : ""}" style="${count === 7 ? `background:${c};` : ""}">${count}/7</div>
+          <div class="badge ${goal > 0 && count >= goal ? "full" : ""}" style="${goal > 0 && count >= goal ? `background:${c};` : ""}">${count}/${goal || 7}</div>
         </div>
         <div class="row">${cells}</div>
       </div>`;
@@ -894,6 +970,8 @@ function esc(s) { return s.replace(/[&<>"']/g, (m) => ({ "&":"&amp;","<":"&lt;",
 /* ================= Toggle + toast ================= */
 function handleToggle(habitId, date) {
   if (isFuture(date)) return;
+  const h = state.habits.find((x) => x.id === habitId);
+  if (!h || !applicableOn(h, date)) return;
   vibrate(10);
   const before = cellState(habitId, date);
   toggle(habitId, date);
@@ -943,15 +1021,40 @@ function renderSheetSugg() {
   );
 }
 
+function renderDayPick() {
+  $("hs-days").innerHTML = DAY_SYMS.map((s, i) =>
+    `<button class="${sheetDays.includes(i) ? "on" : ""}" data-d="${i}" aria-pressed="${sheetDays.includes(i)}">${s}</button>`
+  ).join("");
+  $("hs-days").querySelectorAll("button").forEach((b) =>
+    b.addEventListener("click", () => {
+      const d = +b.dataset.d;
+      if (sheetDays.includes(d)) {
+        if (sheetDays.length === 1) { showToast("요일은 최소 1개 이상 선택해야 해요"); return; }
+        sheetDays = sheetDays.filter((x) => x !== d);
+      } else {
+        sheetDays = [...sheetDays, d].sort((a, b) => a - b);
+      }
+      renderDayPick();
+    })
+  );
+}
+
 function openHabitSheet(habitId, seedName) {
   editingId = habitId;
   const habit = habitId ? state.habits.find((h) => h.id === habitId) : null;
   $("hs-title").textContent = habit ? "습관 편집" : "새 갓생 습관";
   $("hs-save").textContent = habit ? "저장" : "추가";
   $("hs-delete").style.display = habit ? "block" : "none";
+  $("hs-archive").style.display = habit ? "block" : "none";
+  $("hs-order-row").style.display = habit ? "flex" : "none";
+  const idx = habit ? state.habits.findIndex((x) => x.id === habit.id) : -1;
+  $("hs-up").disabled = idx <= 0;
+  $("hs-down").disabled = idx === -1 || idx >= state.habits.length - 1;
   $("hs-sugg-wrap").style.display = habit ? "none" : "block";
   $("hs-name").value = habit ? habit.name : (seedName || "");
   sheetEmoji = habit ? habit.symbol : (SUGGESTIONS.find(([n]) => n === seedName)?.[1] || "⭐");
+  sheetDays = habit ? [...habit.days] : [0, 1, 2, 3, 4, 5, 6];
+  renderDayPick();
   if (!habit) renderSheetSugg();
   renderEmojiGrid();
   renderPreview();
@@ -1011,9 +1114,9 @@ function saveHabit() {
   if (!name) return;
   if (editingId) {
     const h = state.habits.find((h) => h.id === editingId);
-    if (h) { h.name = name; h.symbol = sheetEmoji; }
+    if (h) { h.name = name; h.symbol = sheetEmoji; h.days = sanitizeDays(sheetDays); }
   } else {
-    addHabit(name, sheetEmoji);
+    addHabit(name, sheetEmoji, sheetDays);
   }
   save();
   hideSheets();
@@ -1080,7 +1183,9 @@ function doImport(file) {
         name: String(h.name).slice(0, 30),
         symbol: typeof h.symbol === "string" ? h.symbol : "⭐",
         color: Number.isInteger(h.color) ? h.color : 0,
-        createdAt: h.createdAt || Date.now()
+        createdAt: h.createdAt || Date.now(),
+        days: sanitizeDays(h.days),
+        archived: !!h.archived
       }));
       const todayK = key(new Date());
       const validKey = (k) => {
@@ -1107,8 +1212,24 @@ function openSettings() {
   const th = themeFor(new Date().getFullYear(), new Date().getMonth());
   $("edittheme").textContent = th ? "변경" : "정하기";
   $("editname").textContent = state.name.trim() || "설정";
-  $("stat-habits").textContent = state.habits.length + "개";
+  const archived = state.habits.filter((h) => h.archived);
+  $("archived-wrap").style.display = archived.length ? "block" : "none";
+  $("stat-habits").textContent = activeHabits().length + "개";
   $("stat-checks").textContent = state.checks.size + "회";
+  $("archived-list").innerHTML = archived.map((h) => `
+    <div class="setrow"><span>${h.symbol} ${esc(h.name)}</span><button class="setbtn" data-unarchive="${h.id}">해제</button></div>
+  `).join("");
+  $("archived-list").querySelectorAll("[data-unarchive]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const h = state.habits.find((x) => x.id === b.dataset.unarchive);
+      if (!h) return;
+      h.archived = false;
+      save();
+      renderAll();
+      openSettings();
+      showToast(h.name + "을 다시 꺼냈어요");
+    })
+  );
   showSheet($("settings-sheet"));
 }
 
@@ -1228,10 +1349,39 @@ function renderCalendar() {
     const k = key(d);
     const { level, perfect: isPerfect } = dayLevel(d);
     const cls = ["cal-cell", level ? "l" + level : "", k === todayK ? "today" : ""].join(" ").trim();
-    html += `<div class="${cls}"><span class="num">${day}</span><span class="sq">${isPerfect ? "★" : ""}</span></div>`;
+    html += `<div class="${cls}" data-date="${k}"><span class="num">${day}</span><span class="sq">${isPerfect ? "★" : ""}</span></div>`;
   }
   $("cal-grid").innerHTML = html;
+  $("cal-grid").querySelectorAll("[data-date]").forEach((el) =>
+    el.addEventListener("click", () => openDaySheet(el.dataset.date))
+  );
 }
+
+function openDaySheet(ds) {
+  const [y, m, d] = ds.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const wd = (date.getDay() + 6) % 7;
+  $("day-title").textContent = `${m}월 ${d}일 (${DAY_SYMS[wd]})`;
+  const rows = state.habits.map((h) => {
+    let st, label;
+    if (!applicableOn(h, date)) { st = "na"; label = h.archived ? "보관됨" : "쉬는 날"; }
+    else {
+      st = cellState(h.id, date);
+      label = st === "on" ? "✓ 했어요" : st === "off" ? "✗ 안 했어요" : "— 기록 없음";
+    }
+    return { h, st, label };
+  });
+  $("day-list").innerHTML = rows.length
+    ? rows.map((r) => `
+      <div class="dayrow">
+        <span>${r.h.symbol}</span>
+        <span style="${r.h.archived ? "color:var(--label3)" : ""}">${esc(r.h.name)}${r.h.archived ? " (보관)" : ""}</span>
+        <span class="st ${r.st}">${r.label}</span>
+      </div>`).join("")
+    : `<div class="review-empty">이 달에는 습관이 없었어요.</div>`;
+  showSheet($("day-sheet"));
+}
+$("day-close").addEventListener("click", hideSheets);
 
 function countPerfectDays() {
   if (state.habits.length === 0) return 0;
@@ -1338,6 +1488,23 @@ function openReviewSheet() {
 }
 $("review-btn").addEventListener("click", openReviewSheet);
 $("review-close").addEventListener("click", hideSheets);
+$("gallery-open").addEventListener("click", () => {
+  const list = [...state.themes].sort((a, b) => b.month.localeCompare(a.month));
+  $("gallery-list").innerHTML = list.length ? list.map((t) => {
+    const [yy, mm] = t.month.split("-").map(Number);
+    const p = monthPerfect(yy, mm - 1);
+    return `
+      <div class="galrow">
+        <div class="gm">${yy}년 ${mm}월</div>
+        <div class="gt">🎯 ${esc(t.title)}</div>
+        ${t.vow ? `<div class="gv">${esc(t.vow)}</div>` : ""}
+        <div class="gp">완벽한 날 <b>${p}일</b></div>
+      </div>`;
+  }).join("") : `<div class="review-empty">아직 저장된 테마가 없어요.<br>이번 달 테마를 정해보세요.</div>`;
+  hideSheets();
+  setTimeout(() => showSheet($("gallery-sheet")), 120);
+});
+$("gallery-close").addEventListener("click", hideSheets);
 
 /* ================= Sheet drag-to-dismiss ================= */
 document.querySelectorAll(".sheet").forEach((sheet) => {
@@ -1482,6 +1649,31 @@ $("tabfab").addEventListener("click", () => openHabitSheet(null));
 $("hs-cancel").addEventListener("click", hideSheets);
 $("hs-save").addEventListener("click", saveHabit);
 $("hs-delete").addEventListener("click", deleteHabit);
+$("hs-archive").addEventListener("click", () => {
+  const h = state.habits.find((x) => x.id === editingId);
+  if (!h) return;
+  h.archived = true;
+  save();
+  hideSheets();
+  renderAll();
+  openSettings();
+  showToast("보관했어요. 설정에서 다시 꺼낼 수 있어요");
+});
+$("hs-up").addEventListener("click", () => moveHabit(-1));
+$("hs-down").addEventListener("click", () => moveHabit(1));
+function moveHabit(delta) {
+  const i = state.habits.findIndex((x) => x.id === editingId);
+  const j = i + delta;
+  if (i === -1 || j < 0 || j >= state.habits.length) return;
+  [state.habits[i], state.habits[j]] = [state.habits[j], state.habits[i]];
+  save();
+  renderAll();
+  const h = state.habits.find((x) => x.id === editingId);
+  if (h) { $("pv-chip").textContent = h.symbol; }
+  const idx = state.habits.findIndex((x) => x.id === editingId);
+  $("hs-up").disabled = idx <= 0;
+  $("hs-down").disabled = idx >= state.habits.length - 1;
+}
 $("hs-name").addEventListener("input", renderPreview);
 $("hs-name").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.target.blur(); } });
 $("backdrop").addEventListener("click", hideSheets);
