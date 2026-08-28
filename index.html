@@ -193,6 +193,48 @@
   }
   .sugg:active { transform: scale(0.95); }
 
+  /* ---------- Weekly todo ---------- */
+  .todo-card {
+    margin-top: 14px; background: var(--card); border-radius: 22px; padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+  .todo-card .t-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .todo-card .t-label { font-size: 14px; font-weight: 700; }
+  .todo-card .t-count {
+    margin-left: auto; font-size: 12px; font-weight: 700; color: var(--brand);
+    background: rgba(107,76,245,0.12); border-radius: 999px; padding: 4px 10px;
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .todo-add {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--fill2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; line-height: 1; color: var(--brand); flex-shrink: 0;
+    transition: transform 0.12s;
+  }
+  .todo-add:active { transform: scale(0.85); }
+  .todo-item {
+    display: flex; align-items: center; gap: 12px; padding: 9px 2px;
+    border-bottom: 1px solid var(--sep);
+  }
+  .todo-item:last-of-type { border-bottom: none; }
+  .todo-check {
+    width: 24px; height: 24px; border-radius: 8px; flex-shrink: 0;
+    border: 1.8px solid var(--fill); background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: transparent;
+    transition: all 0.15s;
+  }
+  .todo-check:active { transform: scale(0.85); }
+  .todo-check.on { border-color: var(--brand); background: var(--brand); color: #fff; }
+  .todo-text { flex: 1; font-size: 14px; min-width: 0; word-break: break-word; transition: color 0.2s; }
+  .todo-item.done .todo-text { color: var(--label3); text-decoration: line-through; }
+  .todo-del {
+    flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; color: var(--label3);
+    font-size: 15px; line-height: 1; transition: transform 0.12s, color 0.2s;
+  }
+  .todo-del:active { transform: scale(0.85); color: #FF3B30; }
+  .todo-empty { font-size: 13px; color: var(--label2); padding: 4px 2px 6px; }
+
   /* ---------- Add button ---------- */
   #addbtn {
     width: 100%; margin-top: 16px; height: 52px; border-radius: 18px;
@@ -543,6 +585,8 @@
 
   <button class="theme-banner" id="theme-banner"></button>
 
+  <div id="todos-wrap"></div>
+
   <div class="weeknav">
     <button class="navbtn" id="prevweek" aria-label="지난주">‹</button>
     <div class="weekrange" id="weekrange"></div>
@@ -634,6 +678,17 @@
   <button class="btn danger" id="th-delete" style="display:none">테마 지우기</button>
 </div>
 
+<div class="sheet" id="todo-sheet">
+  <div class="grab"></div>
+  <h3 id="todo-title">이번주 할 일 추가</h3>
+  <div class="lbl">할 일</div>
+  <input type="text" id="todo-input" placeholder="예: 책상 정리하기" maxlength="40" enterkeyhint="done" autocomplete="off">
+  <div class="actions">
+    <button class="btn ghost" id="todo-cancel">취소</button>
+    <button class="btn primary" id="todo-save">추가</button>
+  </div>
+</div>
+
 <div class="sheet" id="review-sheet">
   <div class="grab"></div>
   <h3 id="review-title">월말 리뷰</h3>
@@ -723,16 +778,18 @@ function load() {
         skips: new Set(Array.isArray(s.skips) ? s.skips : []),
         onboarded: !!s.onboarded,
         name: typeof s.name === "string" ? s.name : "",
-        themes: Array.isArray(s.themes) ? s.themes.filter((t) => t && typeof t.month === "string" && typeof t.title === "string").map((t) => ({ month: t.month, title: String(t.title).slice(0, 30), vow: typeof t.vow === "string" ? String(t.vow).slice(0, 60) : "" })) : []
+        themes: Array.isArray(s.themes) ? s.themes.filter((t) => t && typeof t.month === "string" && typeof t.title === "string").map((t) => ({ month: t.month, title: String(t.title).slice(0, 30), vow: typeof t.vow === "string" ? String(t.vow).slice(0, 60) : "" })) : [],
+        todos: Array.isArray(s.todos) ? s.todos.filter((t) => t && typeof t.text === "string").map((t) => ({ id: typeof t.id === "string" ? t.id : uid(), text: String(t.text).slice(0, 40), done: !!t.done })) : [],
+        todoWeek: typeof s.todoWeek === "string" ? s.todoWeek : ""
       };
     }
   } catch (e) { console.warn("load failed", e); }
-  return { habits: [], checks: new Set(), skips: new Set(), onboarded: false, name: "", themes: [] };
+  return { habits: [], checks: new Set(), skips: new Set(), onboarded: false, name: "", themes: [], todos: [], todoWeek: "" };
 }
 function save() {
   try {
     localStorage.setItem(STORE_KEY, JSON.stringify({
-      habits: state.habits, checks: [...state.checks], skips: [...state.skips], onboarded: state.onboarded, name: state.name, themes: state.themes
+      habits: state.habits, checks: [...state.checks], skips: [...state.skips], onboarded: state.onboarded, name: state.name, themes: state.themes, todos: state.todos, todoWeek: state.todoWeek
     }));
   } catch (e) { console.warn("save failed", e); }
 }
@@ -795,9 +852,78 @@ const $ = (id) => document.getElementById(id);
 function renderAll() {
   renderHeader();
   renderBanner();
+  renderTodos();
   renderDays();
   renderCards();
   renderNav();
+}
+
+/* ================= Weekly todo ================= */
+function currentWeekKey() { return key(mondayOf(new Date())); }
+function ensureTodoWeek() {
+  const w = currentWeekKey();
+  if (state.todoWeek !== w) { state.todos = []; state.todoWeek = w; save(); }
+}
+function renderTodos() {
+  ensureTodoWeek();
+  const wrap = $("todos-wrap");
+  const done = state.todos.filter((t) => t.done).length;
+  const total = state.todos.length;
+  const head = `
+    <div class="todo-card">
+      <div class="t-head">
+        <span class="t-label">📋 이번주 할 일</span>
+        ${total ? `<span class="t-count">${done}/${total}</span>` : ""}
+        <button class="todo-add" id="todo-add" aria-label="할 일 추가">＋</button>
+      </div>`;
+  const items = state.todos.length === 0
+    ? `<div class="todo-empty">이번 주에 할 일을 적어보세요. 완료하면 체크할 수 있어요.</div>`
+    : state.todos.map((t) => `
+        <div class="todo-item ${t.done ? "done" : ""}">
+          <button class="todo-check ${t.done ? "on" : ""}" data-id="${t.id}" aria-label="${t.done ? "완료 취소" : "완료"}">${t.done ? "✓" : ""}</button>
+          <span class="todo-text">${esc(t.text)}</span>
+          <button class="todo-del" data-del="${t.id}" aria-label="삭제">✕</button>
+        </div>`).join("");
+  wrap.innerHTML = head + items + `</div>`;
+  wrap.querySelector("#todo-add").addEventListener("click", openTodoSheet);
+  wrap.querySelectorAll(".todo-check").forEach((b) =>
+    b.addEventListener("click", () => toggleTodo(b.dataset.id))
+  );
+  wrap.querySelectorAll(".todo-del").forEach((b) =>
+    b.addEventListener("click", () => deleteTodo(b.dataset.del))
+  );
+}
+function openTodoSheet() {
+  $("todo-title").textContent = "이번주 할 일 추가";
+  $("todo-save").textContent = "추가";
+  $("todo-input").value = "";
+  $("todo-save").disabled = true;
+  showSheet($("todo-sheet"));
+  setTimeout(() => $("todo-input").focus(), 320);
+}
+function todoUpdate() { $("todo-save").disabled = !$("todo-input").value.trim(); }
+function saveTodo() {
+  const text = $("todo-input").value.trim().slice(0, 40);
+  if (!text) return;
+  ensureTodoWeek();
+  state.todos.push({ id: uid(), text, done: false });
+  save();
+  hideSheets();
+  renderAll();
+  showToast("할 일을 추가했어요");
+}
+function toggleTodo(id) {
+  const t = state.todos.find((x) => x.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  if (t.done) vibrate(10);
+  save();
+  renderAll();
+}
+function deleteTodo(id) {
+  state.todos = state.todos.filter((x) => x.id !== id);
+  save();
+  renderAll();
 }
 
 /* ================= Monthly theme ================= */
@@ -1140,7 +1266,7 @@ function deleteHabit() {
 function doExport() {
   const data = {
     app: "godlife", version: 2, exportedAt: new Date().toISOString(),
-    name: state.name, habits: state.habits, checks: [...state.checks], skips: [...state.skips], themes: state.themes
+    name: state.name, habits: state.habits, checks: [...state.checks], skips: [...state.skips], themes: state.themes, todos: state.todos, todoWeek: state.todoWeek
   };
   const d = new Date();
   const filename = `godlife-backup-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}.json`;
@@ -1197,6 +1323,8 @@ function doImport(file) {
       state.skips = new Set(Array.isArray(data.skips) ? data.skips.filter(validKey) : []);
       state.name = typeof data.name === "string" ? data.name.slice(0, 12) : "";
       state.themes = Array.isArray(data.themes) ? data.themes.filter((t) => t && typeof t.month === "string" && typeof t.title === "string").map((t) => ({ month: t.month, title: String(t.title).slice(0, 30), vow: typeof t.vow === "string" ? String(t.vow).slice(0, 60) : "" })) : [];
+      state.todos = Array.isArray(data.todos) ? data.todos.filter((t) => t && typeof t.text === "string").map((t) => ({ id: typeof t.id === "string" ? t.id : uid(), text: String(t.text).slice(0, 40), done: !!t.done })) : [];
+      state.todoWeek = typeof data.todoWeek === "string" ? data.todoWeek : currentWeekKey();
       save();
       renderAll();
       openSettings();
@@ -1718,6 +1846,14 @@ $("th-delete").addEventListener("click", () => {
   renderCalendar();
 });
 $("edittheme").addEventListener("click", () => { hideSheets(); setTimeout(openThemeSheet, 120); });
+
+/* Weekly todo */
+$("todo-cancel").addEventListener("click", hideSheets);
+$("todo-save").addEventListener("click", saveTodo);
+$("todo-input").addEventListener("input", todoUpdate);
+$("todo-input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !$("todo-save").disabled) saveTodo();
+});
 
 /* Settings */
 $("gearbtn").addEventListener("click", openSettings);
